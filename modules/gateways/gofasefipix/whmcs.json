@@ -1,0 +1,23 @@
+{
+  "schema": "1.0",
+  "type": "whmcs-gateways",
+  "name": "gofasefipix",
+  "license": "proprietary",
+  "category": "payments",
+  "description": {
+    "name": "Gofas efi pix",
+    "tagline": "Recebimento via QR code diretamente nas faturas do WHMCS."
+  },
+  "logo": {
+    "filename": "whmcs.png"
+  },
+  "support": {
+    "docs_url": "https:\/\/gofas.net\/gefip"
+  },
+  "authors": [
+    {
+      "name": "Gofas Software",
+      "homepage": "https:\/\/gofas.net\/"
+    }
+  ]
+}
