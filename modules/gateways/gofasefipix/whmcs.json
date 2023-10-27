@@ -5,7 +5,7 @@
   "license": "proprietary",
   "category": "payments",
   "description": {
-    "name": "Gofas efi pix",
+    "name": "Gofas Efí Pix",
     "tagline": "Recebimento via QR code diretamente nas faturas do WHMCS."
   },
   "logo": {

@@ -1,8 +1,9 @@
 /**
- * Módulo Gofas Efi Pix para WHMCS
+ * Módulo Efí Pix para WHMCS
  * @copyright	2023 Gofas Software
  * @see			https://gofas.net/?p=15590
  * @license		https://gofas.net/?p=9340
+ * @support		https://gofas.net/?p=14299
  * @version		1.0.0
  */
 $(document).ready(function () {
@@ -19,7 +20,7 @@ $(document).ready(function () {
                    console.log('status: ' + data);
                 }
                 */
-                if (data == "paid") {
+                if (data == "CONCLUIDA") {
                     window.location.reload();
                 }
             }

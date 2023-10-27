@@ -1,9 +1,10 @@
 <?php
 /**
- * Módulo Gofas Efi Pix para WHMCS
+ * Módulo Efí Pix para WHMCS
  * @copyright	2023 Gofas Software
  * @see			https://gofas.net/?p=15590
  * @license		https://gofas.net/?p=9340
+ * @support		https://gofas.net/?p=14299
  * @version		1.0.0
  */
 use WHMCS\Database\Capsule;
@@ -29,14 +30,14 @@ if(!function_exists('gefip_api_connect')){
 			$params_api = [
 				'api_mode' => 'sandbox',
 				'api_token' => $params['sandbox_api_token'],
-				'charge_url' => 'https://api.efi.com/v1',
+				'charge_url' => 'https://api.iugu.com/v1',
 			];
 		}
 		if(!$params['sandbox']){
 			$params_api = [
 				'api_mode' => 'live',
 				'api_token' => $params['api_token'],
-				'charge_url' => 'https://api.efi.com/v1',
+				'charge_url' => 'https://api.iugu.com/v1',
 			];
 		}
 		return $params_api;
@@ -106,7 +107,7 @@ if(!function_exists('gefip_enable_pix')){
 				}
 			}
 			else{
-				logActivity('Gofas efi - Pix | Erro ao ativar pagamento via PIX na conta efi: '.$result_code.': '.$result,0);
+				logActivity('Gofas iugu - Pix | Erro ao ativar pagamento via PIX na conta iugu: '.$result_code.': '.$result,0);
 			}
 			}
 		}
@@ -191,7 +192,7 @@ if(!function_exists('gofasefipix_config')){
     function gofasefipix_config(){
 		$gefip_config = [];
     	if(stripos($_SERVER['REQUEST_URI'], 'configgateways')!==false){
-    		$module_version	= '1.0.1';
+    		$module_version	= '1.0.0';
     		$module_page	= '15590';
             $verify_install = gefip_verify_install();
     		$whmcs_url = gefip_whmcs_url();
@@ -212,7 +213,7 @@ if(!function_exists('gofasefipix_config')){
     			return [
     				'FriendlyName' => [
     					'Type' => 'System',
-    					'Value' => 'Gofas efi - Pix',
+    					'Value' => 'Gofas iugu - Pix',
     				],
     				'separator_1' => [
     					'Description' => '
@@ -221,9 +222,9 @@ if(!function_exists('gofasefipix_config')){
     						'.gefip_decrypt($check_updates['check']).'
     						</div>
     						<div>
-    							<h4 style="padding-top: 5px; color: red;">Módulo Gofas efi - Pix para WHMCS v'.$module_version.' | requer WHMCS versão 8.6.1 ou superior</h4>
+    							<h4 style="padding-top: 5px; color: red;">Módulo Gofas iugu - Pix para WHMCS v'.$module_version.' | requer WHMCS versão 8.6.1 ou superior</h4>
     							'.$check_updates['message'].'
-    							<p><a style="text-decoration:underline;" target="_blank" href="https://gofas.net/?p=15590#configuration">Documentação do módulo</a> | <a style="text-decoration:underline;" target="_blank" href="https://dev.efi.com/reference/metadados/">Documentação da API efi</a></p>
+    							<p><a style="text-decoration:underline;" target="_blank" href="https://gofas.net/?p=15590#configuration">Documentação do módulo</a> | <a style="text-decoration:underline;" target="_blank" href="https://dev.iugu.com/reference/metadados/">Documentação da API iugu</a></p>
 								'.gefip_file_exists_check('/includes/hooks/gofasefipix.php').'
 							</div>
     					</div>',
@@ -243,7 +244,7 @@ if(!function_exists('gofasefipix_config')){
     		$renderize = array(
     			'FriendlyName' => array(
     				'Type' => 'System',
-    				'Value' => 'Gofas efi - Pix',
+    				'Value' => 'Gofas iugu - Pix',
     			),
     			'separator_1' => array(
     				'Description' => '
@@ -252,9 +253,9 @@ if(!function_exists('gofasefipix_config')){
     					'.gefip_decrypt($check_updates['check']).'
     					</div>
     					<div>
-    						<h4 style="padding-top: 5px;">Módulo Gofas efi - Pix para WHMCS v'.$module_version.'</h4>
+    						<h4 style="padding-top: 5px;">Módulo Gofas iugu - Pix para WHMCS v'.$module_version.'</h4>
     						'.$check_updates['message'].'
-    						<p><a style="text-decoration:underline;" target="_blank" href="https://gofas.net/?p=15590#configuration">Documentação do módulo</a> | <a style="text-decoration:underline;" target="_blank" href="https://dev.efi.com/reference/metadados/">Documentação da API efi</a></p>
+    						<p><a style="text-decoration:underline;" target="_blank" href="https://gofas.net/?p=15590#configuration">Documentação do módulo</a> | <a style="text-decoration:underline;" target="_blank" href="https://dev.iugu.com/reference/metadados/">Documentação da API iugu</a></p>
 							'.gefip_file_exists_check('/includes/hooks/gofasefipix.php').'
     					</div>
     				</div>',
@@ -264,17 +265,17 @@ if(!function_exists('gofasefipix_config')){
     				'Type' => 'password',
     				'Size' => '50',
     				'Default' => '',
-    				'Description' => '<a target="_blank" style="text-decoration:underline;" href="https://alia.efi.com/settings/account/api_integration">Obter API token</a>',
+    				'Description' => '<a target="_blank" style="text-decoration:underline;" href="https://alia.iugu.com/settings/account/api_integration">Obter API token</a>',
     			),
 				'sandbox_api_token' => array(
     				'FriendlyName' => $opt_num++.'- API token teste<span class="gefip_required">*</span>',
     				'Type' => 'password',
     				'Size' => '50',
     				'Default' => '',
-    				'Description' => '<a target="_blank" style="text-decoration:underline;" href="https://alia.efi.com/settings/account/api_integration">Obter API token</a>',
+    				'Description' => '<a target="_blank" style="text-decoration:underline;" href="https://alia.iugu.com/settings/account/api_integration">Obter API token</a>',
     			),
     			'separator_2' => array(
-    				'Description' => '<span><a target="_blank" style="text-decoration:underline;" href="https://dev.efi.com/reference/autentica%C3%A7%C3%A3o#criando-suas-chaves-de-api-api-tokens-via-painel">Veja aqui como criar suas chaves de API (API Tokens) via painel efi</a></span>',
+    				'Description' => '<span><a target="_blank" style="text-decoration:underline;" href="https://dev.iugu.com/reference/autentica%C3%A7%C3%A3o#criando-suas-chaves-de-api-api-tokens-via-painel">Veja aqui como criar suas chaves de API (API Tokens) via painel iugu</a></span>',
 				),
 				// Sandbox
     			'sandbox' => array(
@@ -296,7 +297,7 @@ if(!function_exists('gofasefipix_config')){
     				'Type' => 'text',
     				'Size' => '10',
     				'Default' => '5',
-    				'Description' => 'Insira o valor total mínimo da fatura para permitir pagamento via Pix. Formato: Decimal, separado por ponto. Não deve ser menor que o valor da tarifa aplicada à sua conta efi.',
+    				'Description' => 'Insira o valor total mínimo da fatura para permitir pagamento via Pix. Formato: Decimal, separado por ponto. Não deve ser menor que o valor da tarifa aplicada à sua conta iugu.',
     			),
     			// Dias + vencimento
     			'diasparavencimento' => array(
@@ -333,7 +334,7 @@ if(!function_exists('gofasefipix_config')){
             	    'Type'              => 'text',
     				'Size'				=> '2',
     				'Default' 			=> '100',
-            	    'Description'       => 'Número máximo de transações consultadas por vez. As consultas à API efi são realizadas em fila onde todas as faturas a verificar são divididas em lotes, cuja quantidade é o valor definido nesse campo.',
+            	    'Description'       => 'Número máximo de transações consultadas por vez. As consultas à API iugu são realizadas em fila onde todas as faturas a verificar são divididas em lotes, cuja quantidade é o valor definido nesse campo.',
             	),
     		);
     		$footer = array('footer' => array(
@@ -1143,8 +1144,8 @@ if(!function_exists('gefip_get_protected_property')){
 if(!function_exists('gefip_qrcode_mergetags_fields')){
     function gefip_qrcode_mergetags_fields($vars){
         $gefip_merge_fields = array();
-	    $gefip_merge_fields['gefip_qrcode']		= 'Efi Pix: URL a imagem do QR code';
-		$gefip_merge_fields['gefip_qrcode_text']	= 'Efi Pix: Pix Copia e Cola';
+	    $gefip_merge_fields['gefip_qrcode']		= 'Efí Pix: URL a imagem do QR code';
+		$gefip_merge_fields['gefip_qrcode_text']	= 'Efí Pix: Pix Copia e Cola';
         return $gefip_merge_fields;
     }
 }
@@ -1189,7 +1190,7 @@ if(!function_exists('gefip_check_schedule')){
         $max_invoices = $params['maxinvoicespercheck'] ?: '100';
         $total_queue_invoices = Capsule::table('tblinvoices')->where('status','=','Unpaid')->where('paymentmethod','=','gofasefipix')->count();
 		foreach( Capsule::table('tbltransientdata')
-            ->where('name','=','efi.Pix.Charge.Verification')
+            ->where('name','=','iugu.Pix.Charge.Verification')
             ->orderBy('id','desc')
             ->take('1')
             ->get() as $value){
@@ -1232,27 +1233,27 @@ if(!function_exists('gefip_check_schedule')){
                         $skip_invoices = [];
                     }
                     $data = [
-                        'name'=>'efi.Pix.Charge.Verification',
+                        'name'=>'iugu.Pix.Charge.Verification',
                         'data'=>json_encode([
                             'next'=>date('YmdHi',strtotime('+300 seconds')),
                             'skip_invoices'=> array_merge($skip_invoices,$queue_invoices),
                         ]),
                         'expires'=>strtotime('+2 days'),
                     ];
-                    $transientdata = Capsule::table('tbltransientdata')->where('name','=','efi.Pix.Charge.Verification')->update($data);
+                    $transientdata = Capsule::table('tbltransientdata')->where('name','=','iugu.Pix.Charge.Verification')->update($data);
 					unset($transientdata);
                     return $queue_invoices;
                 }
                 if(!$queue_invoices){ // <----
                     $data = [
-                        'name'=>'efi.Pix.Charge.Verification',
+                        'name'=>'iugu.Pix.Charge.Verification',
                         'data'=>json_encode([
                             'next'=>$next_check_schedule,
                             'skip_invoices'=> '',
                         ]),
                         'expires'=>strtotime('+2 days'),
                     ];
-                    $transientdata = Capsule::table('tbltransientdata')->where('name','=','efi.Pix.Charge.Verification')->update($data);
+                    $transientdata = Capsule::table('tbltransientdata')->where('name','=','iugu.Pix.Charge.Verification')->update($data);
 					unset($transientdata);
                     return false;
                 }
@@ -1269,7 +1270,7 @@ if(!function_exists('gefip_check_schedule')){
                 }
                 if($queue_invoices){ // <----
                     $data = [
-                        'name'=>'efi.Pix.Charge.Verification',
+                        'name'=>'iugu.Pix.Charge.Verification',
                         'data'=>json_encode([
                             'next'=>date('YmdHi',strtotime('+300 seconds')),
                             'skip_invoices'=> $queue_invoices,
@@ -1282,7 +1283,7 @@ if(!function_exists('gefip_check_schedule')){
                 }
                 if(!$queue_invoices){ // <----
                     $data = [
-                        'name'=>'efi.Pix.Charge.Verification',
+                        'name'=>'iugu.Pix.Charge.Verification',
                         'data'=>json_encode([
                             'next'=>$next_check_schedule,
                             'skip_invoices'=> '',
@@ -1297,7 +1298,7 @@ if(!function_exists('gefip_check_schedule')){
         }
 		if((int)$total_queue_invoices <1 and !empty($tbltransientdata['skip_invoices'])){
 			$data = [
-				'name'=>'efi.Pix.Charge.Verification',
+				'name'=>'iugu.Pix.Charge.Verification',
 				'data'=>json_encode([
 					'next'=>$next_check_schedule,
 					'skip_invoices'=> '',
@@ -1310,7 +1311,7 @@ if(!function_exists('gefip_check_schedule')){
 		}
 		if((int)$total_queue_invoices <1 and !is_array($tbltransientdata)){
 			$data = [
-				'name'=>'efi.Pix.Charge.Verification',
+				'name'=>'iugu.Pix.Charge.Verification',
 				'data'=>json_encode([
 					'next'=>$next_check_schedule,
 					'skip_invoices'=> '',
