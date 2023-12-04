@@ -7,8 +7,13 @@
  * @support		https://gofas.net/?p=14299
  * @version		1.0.0
  */
+
+require_once __DIR__ . '/../../../init.php';
+require_once __DIR__ . '/../../../includes/gatewayfunctions.php';
+require_once __DIR__ . '/../../../includes/invoicefunctions.php';
 use WHMCS\Database\Capsule;
 use WHMCS\Aplication;
+
 if(!function_exists('gefip_whmcs_url')){
 	function gefip_whmcs_url($type='all'){
         $info=[];
@@ -158,7 +163,7 @@ if(!function_exists('gofasefipix_config')){
     							<h4 style="padding-top: 5px; color: red;">Módulo Gofas Efí - Pix para WHMCS v'.$module_version.' | requer WHMCS versão 8.6.1 ou superior</h4>
     							'.$check_updates['message'].'
     							<p><a style="text-decoration:underline;" target="_blank" href="https://gofas.net/?p=15590#configuration">Documentação do módulo</a> | <a style="text-decoration:underline;" target="_blank" href="https://dev.efi.com/reference/metadados/">Documentação da API efi</a></p>
-								'.gefip_file_exists_check('/includes/hooks/gofasefipix.php').'
+								
 							</div>
     					</div>',
     				],
@@ -189,7 +194,6 @@ if(!function_exists('gofasefipix_config')){
     						<h4 style="padding-top: 5px;">Módulo Gofas Efí - Pix para WHMCS v'.$module_version.'</h4>
     						'.$check_updates['message'].'
     						<p><a style="text-decoration:underline;" target="_blank" href="https://gofas.net/?p=15590#configuration">Documentação do módulo</a> | <a style="text-decoration:underline;" target="_blank" href="https://dev.efi.com/reference/metadados/">Documentação da API efi</a></p>
-							'.gefip_file_exists_check('/includes/hooks/gofasefipix.php').'
     					</div>
     				</div>',
     			),
@@ -250,7 +254,7 @@ if(!function_exists('gofasefipix_config')){
 				'Description' => '<span class="gefip_required_txt">(Obrigatório)</span>.Chave Pix aleatória registrada na sua conta Efí (<a target="_blank" style="text-decoration: underline;" href="https://app.sejaefi.com.br/pix/minhas-chaves">gerenciar chaves</a>)',
 			),
     			'separator_2' => array(
-    				'Description' => '<span><a target="_blank" style="text-decoration:underline;" href="https://dev.efi.com/reference/autentica%C3%A7%C3%A3o#criando-suas-chaves-de-api-api-tokens-via-painel">Veja aqui como criar suas chaves de API (API Tokens) via painel efi</a></span>',
+    				'Description' => '<span><a target="_blank" style="text-decoration:underline;" href="https://dev.efi.com/reference/autentica%C3%A7%C3%A3o#criando-suas-chaves-de-api-api-tokens-via-painel">Veja aqui como criar suas chaves de API (API Tokens) via painel Efí</a></span>',
 				),
 				// Sandbox
     			'sandbox' => array(
@@ -274,6 +278,13 @@ if(!function_exists('gofasefipix_config')){
     				'Default' => '5',
     				'Description' => 'Insira o valor total mínimo da fatura para permitir pagamento via Pix. Formato: Decimal, separado por ponto. Não deve ser menor que o valor da tarifa aplicada à sua conta efi.',
     			),
+				'fee' => array(
+					'FriendlyName' => $opt_num++.'- Valor da tarifa Efí',
+					'Type' => 'text',
+					'Default' => '0.99',
+					'Size' => '10',
+					'Description'    => '<span class="gefic_optional_txt">(Opcional)</span> Insira o valor percentual da comissão paga à Efí a cada transação via Pix com pagamento confirmado. Essa informação servirá para calcular e preencher o campo "Taxas" (fee) da lista de transações do WHMCS, já que a API Efí  não retorna essa informação. Use ponto(.) para separar casas decimais, ex.: 1.5',
+				),
     			// Dias + vencimento
     			'diasparavencimento' => array(
             	    'FriendlyName'      => $opt_num++.'- Dias até o vencimento',
@@ -309,10 +320,11 @@ if(!function_exists('gofasefipix_config')){
 }
 if(!function_exists('gofasefipix_link')){
     function gofasefipix_link($params){
-		if(stripos($_SERVER['REQUEST_URI'], 'viewinvoice.php') !== false ){
-			//$enable_pix = gefip_enable_pix();
+		if(stripos($_SERVER['REQUEST_URI'], 'viewinvoice') !== false ){
+			$gefip_webhook = gefip_webhook();
+			$log['webhook'] = $gefip_webhook;
 		}
-    	//if(stripos($_SERVER['REQUEST_URI'], 'viewinvoice.php') !== false ){
+    	if(stripos($_SERVER['REQUEST_URI'], 'viewinvoice') !== false ){
     		$log['params'] = $params;
     		if($params['amount'] >= $params['minimunamount']){	
     			$result .= '<script>
@@ -332,8 +344,26 @@ if(!function_exists('gofasefipix_link')){
     			</script>';
     			$result .= '<input type="hidden" id="system_url" value="'.gefip_whmcs_url('whmcs_url').'">';
     			$result .= '<input type="hidden" id="invoice_id" value="'.$params['invoiceid'].'">';
-				$result .= '<script type="text/javascript" src="'.gefip_whmcs_url('whmcs_url').'/modules/gateways/gofasefipix/scripts.js" charset="UTF-8"></script>';
-			
+				//$result .= '<script type="text/javascript" src="'.gefip_whmcs_url('whmcs_url').'/modules/gateways/gofasefipix/scripts.js" charset="UTF-8"></script>';
+				$result .= '<script>
+				$(document).ready(function () {
+					var system_url = $("#system_url").val();
+					var invoice_id = $("#invoice_id").val();
+					var get_url = "modules/gateways/gofasefipix.php";
+					setInterval(function () {
+						$.get(
+							system_url + get_url,
+							{ invoice_id: invoice_id },
+							function (data) {
+								if (data == "CONCLUIDA") {
+									window.location.reload();
+								}
+							}
+						);
+					}, 1000); // Every 1 second
+				});
+				
+				</script>';
     			$params_api = gefip_api_connect();
 				
     			$customer = gefip_customer($params['clientdetails']['id']);
@@ -343,11 +373,11 @@ if(!function_exists('gofasefipix_link')){
 				$GetInvoiceResults			= localAPI('getinvoice',array('invoiceid'=>$params['invoiceid'] ), (int)gefip_setup_admin()['id'] );
     			
     			if($saved_qrcode['qrcode'] and (float)$saved_qrcode['amount'] === (float)$params['amount']){
-    				$charge_verify = gefip_charge_verify($saved_qrcode['id']);
+    				$charge_verify = gefip_charge_verify($saved_qrcode['txid']);
     				$log['charge_verify'] = $charge_verify;
-    				if((string)$charge_verify['result']['status'] === (string)'paid'){
-    					$add_trans = gefip_add_trans($params['clientdetails']['id'], $params['invoiceid'], (float)number_format( $charge_verify['result']['total_paid_cents']/100,  2, '.', ''), (float)number_format( $charge_verify['result']['taxes_paid_cents']/100,  2, '.', ''), 'gefip-'.$saved_qrcode['id'].'-'.$params_api['api_mode'], 'Pix pago - confirmação ao acessar a fatura');
-    					header_remove();
+    				if((string)$charge['result']['status'] === (string)'CONCLUIDA'){
+    					$add_trans = gefip_add_trans($params['clientdetails']['id'],$params['invoiceid'], (float)$charge['result']['valor']['original'], gefip_fee($charge['result']['valor']['original']), 'gefip-'.$params_api['api_mode'].'-'.$qrcode['txid'], 'Pix pago - confirmação ao acessar a fatura');
+						header_remove();
     					header("Location: ".gefip_whmcs_url('whmcs_url').'/viewinvoice.php?id='.$params['invoiceid'],true,303);
     					exit;
     				}
@@ -483,7 +513,7 @@ if(!function_exists('gofasefipix_link')){
     			$error .= 'O valor mínimo para utilizar esse método de pagamento é '.number_format( $params['minimunamount'] ,  2, ',', '.').'.';
     			return $error;
     		}
-    	//}
+    	}
     }
 }
 if( !function_exists('gefip_get_token') ){
@@ -567,6 +597,66 @@ if(!function_exists('gefip_charge_verify')){
 		return ['result_code'=>$result_code,'result'=>$result];
 	}
 }
+if(!function_exists('gefip_webhook')){
+	function gefip_webhook(){
+		$params_api = gefip_api_connect();
+		$access_token = gefip_get_token();
+		$params = getGatewayVariables('gofasefipix');
+		foreach( Capsule::table('tblconfiguration')->where('setting','=','gefip_webhook')->get(['value','created_at']) as $webhook_ ){
+			$webhook				= json_decode($webhook_->value, true);
+			$webhook['created_at']	= $webhook_->created_at;
+		}
+		$webhook_url = gefip_whmcs_url('whmcs_url').'modules/gateways/gofasefipix/includes/';
+		if($webhook['webhook_url'] !== $webhook_url || $webhook['pixkey'] !== $params['pixkey'] || !$webhook['webhook_url'] || !$webhook['pixkey']){
+			$curl = curl_init($params_api['charge_url'].'/v2/webhook/'.$params['pixkey']);
+			curl_setopt($curl, CURLOPT_HTTPHEADER, array(
+				'Authorization: Bearer '.$access_token['access_token'],
+				'Content-Type: application/json',
+				'partner-token: baaf5b95d55433890bd835cf006772b9462bde8f',
+				'x-skip-mtls-checking: true',));
+  			curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+			curl_setopt($curl, CURLOPT_SSLCERT, $params_api['certificate']);
+			curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'PUT');
+			curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode(['webhookUrl'=>$webhook_url]));
+			$result = json_decode(curl_exec($curl),true);
+			$result_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+			curl_close($curl);
+		}
+		if((int)$result_code === 200){
+			if(!empty($webhook['webhook_url']) || !empty($webhook['pixkey'])){
+				try {
+					Capsule::table('tblconfiguration')->where('setting','gefip_webhook')->update([
+						'value' => json_encode([
+							'webhook_url'=>$webhook_url,
+							'pixkey'=>$params['pixkey'],
+						]),
+						'created_at' => $webhook['created_at'],
+						'updated_at' => date("Y-m-d H:i:s")]
+					);
+				}
+				catch (\Exception $e){
+					$error .= $e->getMessage();
+				}
+			}
+			else{
+				try { Capsule::table('tblconfiguration')->insert(array(
+					'setting' => 'gefip_webhook',
+					'value' => json_encode([
+						'webhook_url'=>$webhook_url,
+						'pixkey'=>$params['pixkey'],
+					]),
+					'created_at' => date("Y-m-d H:i:s"),
+					'updated_at' => date("Y-m-d H:i:s")
+				));
+				}
+				catch (\Exception $e){
+					$error .= $e->getMessage();
+				}
+			}
+		}
+		return ['webhook_url'=>$webhook_url,'result_code'=>$result_code,'result'=>$result,'error'=>$error];
+	}
+}
 if(!function_exists('gefip_get_string_between')){
 	function gefip_get_string_between($string, $start, $end){
 		$string = " ".$string;
@@ -577,30 +667,7 @@ if(!function_exists('gefip_get_string_between')){
 		return substr($string,$ini,$len);
 	}
 }
-if(!function_exists('gefip_file_exists_check')){ #10
-    function gefip_file_exists_check($file,$sucess_msg=NULL,$error_msg=NULL){
-		$file = gefip_whmcs_url('root_dir').$file;
-    	if(!file_exists($file)){
-			if(!$error_msg){
-				$error_msg .= '<p style="color: red;padding: 10px;border-left: 2px solid red;padding: 5px 10px 12px 12px;">';
-				$error_msg .= '<span style="font-size: 24px;">Atenção!</span><br>';
-	    	    $error_msg .= 'Arquivo <b>'.$file.'</b> não encontrado.';
-				$error_msg .= '<br>É necessário instalar o <i>hook</i> que acompanha o módulo para todos os recursos funcionarem. <a style="text-decoration:underline;color:red" target="_blank" href="https://gofas.net/gefip/#instalation">Saiba mais </a>&#10138;';
-				$error_msg .= '</p>';
-				return $error_msg;
-			}
-			if($error_msg){
-				return $error_msg;
-			}
-		}
-		else{
-			if($sucess_msg){
-				return $sucess_msg;
-			}
-    	    return;
-    	}
-    }
-}
+
 if(!function_exists('gefip_add_trans')){
 	function gefip_add_trans( $user_id, $invoice_id, $amount, $fee, $id, $description ){
 		$params = getGatewayVariables('gofasefipix');
@@ -1107,11 +1174,19 @@ if(!function_exists('gefip_qrcode_mergetags')){
 		return $gefip_merge_fields;
     }
 }
-
+if(!function_exists('gefip_fee')){
+    function gefip_fee($amount){
+		$params = getGatewayVariables('gofasefipix');
+		$fee = (float)(((float)$amount/100)*(float)$params['fee']);
+		if($fee > (float)'7.90'){
+			return (float)'7.90';
+		}
+		if($fee <= (float)'7.90'){
+			return $fee;
+		}
+	}
+}
 if($_REQUEST['invoice_id']){
-	require_once __DIR__.'./../../../init.php';
-	require_once  __DIR__.'./../../../includes/gatewayfunctions.php';
-	require_once  __DIR__.'./../../../includes/invoicefunctions.php';
 	$params = getGatewayVariables('gofasefipix');
 	$params_api = gefip_api_connect();
 	$invoice = localAPI('getinvoice',array('invoiceid'=> $_REQUEST['invoice_id']),(int)gefip_setup_admin()['id']);
@@ -1119,7 +1194,7 @@ if($_REQUEST['invoice_id']){
 		$qrcode = gefip_get_local_qrc($_REQUEST['invoice_id']);	
 		$charge = gefip_charge_verify($qrcode['txid']);
 		if(((STRING)$charge['result']['status'] === (STRING)'CONCLUIDA') and $invoice['status'] !== 'Paid' and (float)$invoice['total'] === (float)$charge['result']['valor']['original']){
-			$add_trans = gefip_add_trans($invoice['userid'],$_REQUEST['invoice_id'], (float)$charge['result']['valor']['original'], (float)$charge['result']['valor']['original'], 'gefip-'.$params_api['api_mode'].'-'.$qrcode['txid'], 'Pix pago - confirmação ao acessar a fatura');			
+			$add_trans = gefip_add_trans($invoice['userid'],$_REQUEST['invoice_id'], (float)$charge['result']['valor']['original'], gefip_fee($charge['result']['valor']['original']), 'gefip-'.$params_api['api_mode'].'-'.$qrcode['txid'], 'Pix pago - confirmação enquanto o cliente visualizava a fatura');			
 		}
 		if($charge['result']['status']){
 			echo $charge['result']['status'];
@@ -1127,6 +1202,24 @@ if($_REQUEST['invoice_id']){
 	}
 	if($params['log']){
 		logModuleCall('gofasefipix','callback',array('request'=>$_REQUEST),'', array( 'charge'=>$charge ) );
+	}
+}
+if($_POST['id']){
+	$params = getGatewayVariables('gofasefipix');
+	$params_api = gefip_api_connect();
+	$invoice = localAPI('getinvoice',array('invoiceid'=> $_POST['id']),(int)gefip_setup_admin()['id']);
+	if( $invoice['invoiceid']){
+		$qrcode = gefip_get_local_qrc($_POST['id']);	
+		$charge = gefip_charge_verify($qrcode['txid']);
+		if(((string)$charge['result']['status'] === (string)'CONCLUIDA') and $invoice['status'] !== 'Paid' and (float)$invoice['total'] === (float)$charge['result']['valor']['original']){
+			$add_trans = gefip_add_trans($invoice['userid'],$_POST['id'], (float)$charge['result']['valor']['original'], gefip_fee($charge['result']['valor']['original']), 'gefip-'.$params_api['api_mode'].'-'.$qrcode['txid'], 'Pix pago - confirmação via webook /viewinvoice.php');			
+		}
+		if($charge['result']['status']){
+			echo $charge['result']['status'];
+		}
+	}
+	if($params['log']){
+		logModuleCall('gofasefipix','post_1',array('request'=>$_POST),'', array( 'charge'=>$charge ) );
 	}
 }
 add_hook("EmailPreSend",1,"gefip_qrcode_mergetags");

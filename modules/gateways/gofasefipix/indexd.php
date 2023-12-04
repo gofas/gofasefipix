@@ -7,8 +7,13 @@
  * @support		https://gofas.net/?p=14299
  * @version		1.0.0
  */
+
+require_once __DIR__ . '/../../../init.php';
+require_once __DIR__ . '/../../../includes/gatewayfunctions.php';
+require_once __DIR__ . '/../../../includes/invoicefunctions.php';
 use WHMCS\Database\Capsule;
 use WHMCS\Aplication;
+
 if(!function_exists('gefip_whmcs_url')){
 	function gefip_whmcs_url($type='all'){
         $info=[];
@@ -29,105 +34,38 @@ if(!function_exists('gefip_api_connect')){
 		if($params['sandbox']){
 			$params_api = [
 				'api_mode' => 'sandbox',
-				'api_token' => $params['sandbox_api_token'],
-				'charge_url' => 'https://api.iugu.com/v1',
+				'clientid' => $params['clientidsandbox'],
+				'clientsecret' => $params['clientsecretsandbox'],
+				'certificate' => $params['certificatesandbox'],
+				'pixkey'=> $params['pixkey'],
+				'charge_url' => 'https://pix-h.api.efipay.com.br',
 			];
 		}
 		if(!$params['sandbox']){
 			$params_api = [
 				'api_mode' => 'live',
-				'api_token' => $params['api_token'],
-				'charge_url' => 'https://api.iugu.com/v1',
+				'clientid' => $params['clientid'],
+				'clientsecret' => $params['clientsecret'],
+				'certificate' => $params['certificate'],
+				'pixkey'=> $params['pixkey'],
+				'charge_url' => 'https://pix.api.efipay.com.br',
 			];
 		}
 		return $params_api;
 	}
 }
-if(!function_exists('gefip_enable_pix')){
-	function gefip_enable_pix(){
-		$params = getGatewayVariables('gofasefipix');
-		if(!$params['api_token']){
-			return;
-		}
-		$params_api = gefip_api_connect();
-		foreach( Capsule::table('tblconfiguration')->where('setting','=','gefip_pix_enabled')->get(['value','created_at','updated_at']) as $pix_enabled_ ){
-			$pix_enabled	= $pix_enabled_->value;
-			$created_at		= $pix_enabled_->created_at;
-			$updated_at		= $pix_enabled_->updated_at;	
-		}
-		if($pix_enabled and (string)$pix_enabled === (string)'enabled'){
-			return;
-		}
-		if(($pix_enabled and (string)$pix_enabled !== (string)'enabled') || !$pix_enabled){
-    		$curl = curl_init();
-			curl_setopt_array($curl, array(
-				CURLOPT_URL => $params_api['charge_url'].'/payments/pix',
-				CURLOPT_RETURNTRANSFER => true,
-				CURLOPT_ENCODING => '',
-				CURLOPT_MAXREDIRS => 10,
-				CURLOPT_TIMEOUT => 0,
-				CURLOPT_FOLLOWLOCATION => true,
-				CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-				CURLOPT_HTTPHEADER => array(
-			    	'Authorization: Basic '.base64_encode((string)$params['api_token'].':'),
-					'Content-Type: application/json',
-					'Accept: application/json',
-			  	),
-				CURLOPT_CUSTOMREQUEST => 'PUT',
-				CURLOPT_POSTFIELDS => json_encode(['enable'=>true]),
-			));
-			$result = json_decode(curl_exec($curl),true);
-			$result_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-			curl_close($curl);
-			if(is_array($result)){
-			if((int)$result_code === (int)200 || ((int)$result_code !== (int)200 and $result['errors']['base']['0'] and $result['errors']['base']['0'] === 'Conta já possui Pix ativo')){
-				if(!$pix_enabled){
-					try { Capsule::table('tblconfiguration')->insert(array(
-						'setting' => 'gefip_pix_enabled',
-						'value' => 'enabled',
-						'created_at' => date("Y-m-d H:i:s"),
-						'updated_at' => date("Y-m-d H:i:s")
-					));
-					}
-					catch (\Exception $e){
-						$error .= $e->getMessage();
-					}
-				}
-				if($pix_enabled){
-					try { Capsule::table('tblconfiguration')->update(array(
-						'setting' => 'gefip_pix_enabled',
-						'value' => 'enabled',
-						'created_at' => $created_at,
-						'updated_at' => date("Y-m-d H:i:s")
-					));
-					}
-					catch (\Exception $e){
-						$error .= $e->getMessage();
-					}
-				}
-			}
-			else{
-				logActivity('Gofas iugu - Pix | Erro ao ativar pagamento via PIX na conta iugu: '.$result_code.': '.$result,0);
-			}
-			}
-		}
-		if($error){
-			return $error;
-		}
-		return;
-	}
-}
+
 if(!function_exists('gefip_verify_install')){
 	function gefip_verify_install(){
 		if(!Capsule::schema()->hasTable('gofasefipix') ){
 			try {
 				Capsule::schema()->create('gofasefipix', function($table){
 					$table->string('invoice_id');
-					$table->string('charge_id');
+					$table->string('id');
+					$table->string('txid');
 					$table->string('amount');
-					$table->string('duedate');
 					$table->text('qrcode');
-					$table->string('qrcode_text');
+					$table->text('qrcode_image');
 					$table->string('api_mode');
 					$table->string('created_at');
 					$table->string('updated_at');
@@ -213,7 +151,7 @@ if(!function_exists('gofasefipix_config')){
     			return [
     				'FriendlyName' => [
     					'Type' => 'System',
-    					'Value' => 'Gofas iugu - Pix',
+    					'Value' => 'Gofas Efí - Pix',
     				],
     				'separator_1' => [
     					'Description' => '
@@ -222,10 +160,10 @@ if(!function_exists('gofasefipix_config')){
     						'.gefip_decrypt($check_updates['check']).'
     						</div>
     						<div>
-    							<h4 style="padding-top: 5px; color: red;">Módulo Gofas iugu - Pix para WHMCS v'.$module_version.' | requer WHMCS versão 8.6.1 ou superior</h4>
+    							<h4 style="padding-top: 5px; color: red;">Módulo Gofas Efí - Pix para WHMCS v'.$module_version.' | requer WHMCS versão 8.6.1 ou superior</h4>
     							'.$check_updates['message'].'
-    							<p><a style="text-decoration:underline;" target="_blank" href="https://gofas.net/?p=15590#configuration">Documentação do módulo</a> | <a style="text-decoration:underline;" target="_blank" href="https://dev.iugu.com/reference/metadados/">Documentação da API iugu</a></p>
-								'.gefip_file_exists_check('/includes/hooks/gofasefipix.php').'
+    							<p><a style="text-decoration:underline;" target="_blank" href="https://gofas.net/?p=15590#configuration">Documentação do módulo</a> | <a style="text-decoration:underline;" target="_blank" href="https://dev.efi.com/reference/metadados/">Documentação da API efi</a></p>
+								
 							</div>
     					</div>',
     				],
@@ -244,7 +182,7 @@ if(!function_exists('gofasefipix_config')){
     		$renderize = array(
     			'FriendlyName' => array(
     				'Type' => 'System',
-    				'Value' => 'Gofas iugu - Pix',
+    				'Value' => 'Gofas Efí - Pix',
     			),
     			'separator_1' => array(
     				'Description' => '
@@ -253,29 +191,70 @@ if(!function_exists('gofasefipix_config')){
     					'.gefip_decrypt($check_updates['check']).'
     					</div>
     					<div>
-    						<h4 style="padding-top: 5px;">Módulo Gofas iugu - Pix para WHMCS v'.$module_version.'</h4>
+    						<h4 style="padding-top: 5px;">Módulo Gofas Efí - Pix para WHMCS v'.$module_version.'</h4>
     						'.$check_updates['message'].'
-    						<p><a style="text-decoration:underline;" target="_blank" href="https://gofas.net/?p=15590#configuration">Documentação do módulo</a> | <a style="text-decoration:underline;" target="_blank" href="https://dev.iugu.com/reference/metadados/">Documentação da API iugu</a></p>
-							'.gefip_file_exists_check('/includes/hooks/gofasefipix.php').'
+    						<p><a style="text-decoration:underline;" target="_blank" href="https://gofas.net/?p=15590#configuration">Documentação do módulo</a> | <a style="text-decoration:underline;" target="_blank" href="https://dev.efi.com/reference/metadados/">Documentação da API efi</a></p>
     					</div>
     				</div>',
     			),
-    			'api_token' => array(
-    				'FriendlyName' => $opt_num++.'- API token produção<span class="gefip_required">*</span>',
-    				'Type' => 'password',
-    				'Size' => '50',
-    				'Default' => '',
-    				'Description' => '<a target="_blank" style="text-decoration:underline;" href="https://alia.iugu.com/settings/account/api_integration">Obter API token</a>',
-    			),
-				'sandbox_api_token' => array(
-    				'FriendlyName' => $opt_num++.'- API token teste<span class="gefip_required">*</span>',
-    				'Type' => 'password',
-    				'Size' => '50',
-    				'Default' => '',
-    				'Description' => '<a target="_blank" style="text-decoration:underline;" href="https://alia.iugu.com/settings/account/api_integration">Obter API token</a>',
-    			),
+    		// Client ID
+			'clientid' => array(
+				'FriendlyName' => $opt_num++.'- Chave Client ID Produção<span class="gefip_required">*</span>',
+				'Type' => 'text',
+				'Size' => '40',
+				'Default' => '',
+				'Description' => '<span class="gefip_required_txt">(Obrigatório)</span>',
+			),
+			// Client Secret
+			'clientsecret' => array(
+				'FriendlyName' => $opt_num++.'- Chave Client Secret Produção<span class="gefip_required">*</span>',
+				'Type' => 'text',
+				'Size' => '40',
+				'Default' => '',
+				'Description' => '<span class="gefip_required_txt">(Obrigatório)</span>',
+			),
+			// Certificate
+			'certificate' => array(
+				'FriendlyName' => $opt_num++.'- Certificado Produção<span class="gefip_required">*</span>',
+				'Type' => 'text',
+				'Size' => '40',
+				'Default' => '',
+				'Description' => '<span class="gefip_required_txt">(Obrigatório)</span>. Caminho completo e nome do arquivo, exemplo: /var/www/site.com.br/certificado.pem',
+			),
+			// Client ID Sandbox
+			'clientidsandbox' => array(
+				'FriendlyName' => $opt_num++.'- Chave Client ID Desenvolvimento<span class="gefip_required">*</span>',
+				'Type' => 'text',
+				'Size' => '40',
+				'Default' => '',
+				'Description' => '<span class="gefip_required_txt">(Obrigatório)</span>',
+			),
+			// Client Secret Sandbox
+			'clientsecretsandbox' => array(
+				'FriendlyName' => $opt_num++.'- Chave Client Secret Desenvolvimento<span class="gefip_required">*</span>',
+				'Type' => 'text',
+				'Size' => '40',
+				'Default' => '',
+				'Description' => '<span class="gefip_required_txt">(Obrigatório)</span>',
+			),
+			// Certificate
+			'certificatesandbox' => array(
+				'FriendlyName' => $opt_num++.'- Certificado Homologação<span class="gefip_required">*</span>',
+				'Type' => 'text',
+				'Size' => '40',
+				'Default' => '',
+				'Description' => '<span class="gefip_required_txt">(Obrigatório)</span>. Caminho completo e nome do arquivo, exemplo: /var/www/site.com.br/certificado.pem',
+			),
+			// Chave Pix
+			'pixkey' => array(
+				'FriendlyName' => $opt_num++.'- Chave Pix<span class="gefip_required">*</span>',
+				'Type' => 'text',
+				'Size' => '40',
+				'Default' => '',
+				'Description' => '<span class="gefip_required_txt">(Obrigatório)</span>.Chave Pix aleatória registrada na sua conta Efí (<a target="_blank" style="text-decoration: underline;" href="https://app.sejaefi.com.br/pix/minhas-chaves">gerenciar chaves</a>)',
+			),
     			'separator_2' => array(
-    				'Description' => '<span><a target="_blank" style="text-decoration:underline;" href="https://dev.iugu.com/reference/autentica%C3%A7%C3%A3o#criando-suas-chaves-de-api-api-tokens-via-painel">Veja aqui como criar suas chaves de API (API Tokens) via painel iugu</a></span>',
+    				'Description' => '<span><a target="_blank" style="text-decoration:underline;" href="https://dev.efi.com/reference/autentica%C3%A7%C3%A3o#criando-suas-chaves-de-api-api-tokens-via-painel">Veja aqui como criar suas chaves de API (API Tokens) via painel Efí</a></span>',
 				),
 				// Sandbox
     			'sandbox' => array(
@@ -297,8 +276,15 @@ if(!function_exists('gofasefipix_config')){
     				'Type' => 'text',
     				'Size' => '10',
     				'Default' => '5',
-    				'Description' => 'Insira o valor total mínimo da fatura para permitir pagamento via Pix. Formato: Decimal, separado por ponto. Não deve ser menor que o valor da tarifa aplicada à sua conta iugu.',
+    				'Description' => 'Insira o valor total mínimo da fatura para permitir pagamento via Pix. Formato: Decimal, separado por ponto. Não deve ser menor que o valor da tarifa aplicada à sua conta efi.',
     			),
+				'fee' => array(
+					'FriendlyName' => $opt_num++.'- Valor da tarifa Efí',
+					'Type' => 'text',
+					'Default' => '0.99',
+					'Size' => '10',
+					'Description'    => '<span class="gefic_optional_txt">(Opcional)</span> Insira o valor percentual da comissão paga à Efí a cada transação via Pix com pagamento confirmado. Essa informação servirá para calcular e preencher o campo "Taxas" (fee) da lista de transações do WHMCS, já que a API Efí  não retorna essa informação. Use ponto(.) para separar casas decimais, ex.: 1.5',
+				),
     			// Dias + vencimento
     			'diasparavencimento' => array(
             	    'FriendlyName'      => $opt_num++.'- Dias até o vencimento',
@@ -312,30 +298,10 @@ if(!function_exists('gofasefipix_config')){
     				'FriendlyName' => $opt_num++.'- Mensagem na fatura',
     				'Type' => 'text',
     				'Size' => '50',
-    				'Default' => 'QR Code gerado com sucesso.<br>Escaneie ou copie e cole o QR code.<br>',
+    				'Default' => 'QR Code gerado com sucesso.<br>Escaneie ou copie e cole o QR code.\n\n',
     				'Description' => 'Texto exibido na fatura acima do botão "Vizualizar Pix"',
     			),
-    			'separator_3' => array(
-    				'Description' => '<b>Confirmação automática de pagamentos</b> - <a href="https://gofas.net/gefip/#autoverifypayments" target="_blank" style="text-decoration: underline;">Entenda como funciona</a> &#10138;
-                    <br>'.gefip_file_exists_check('/includes/hooks/gofasefipix.php',NULL,$error_msg='<span style="color: red;border-left: 2px solid red;padding-left: 5px;">Atenção! Hook não instalado. Para esse recurso funcionar você deve <b>instalar o hook que acompanha o módulo</b> - <a style="text-decoration:underline;color:red" target="_blank" href="https://gofas.net/gefip/#instalation">Saiba mais </a>&#10138;.</span>').'
-                    ',
-                ),
-    			// Horário da verificação
-    			'verifypaymentsat' => array(
-            	    'FriendlyName'      => $opt_num++.'- Horário da verificação',
-            	    'Type'              => 'text',
-    				'Size'				=> '2',
-    				'Default' 			=> '05:00',
-              		'Description'       => 'Horário em que módulo deve verificar o status de pagamento dos QR codes e confirmar o pagamento das faturas. Formato: HH:MM',
-            	),
-    			// Horário da verificação
-    			'maxinvoicespercheck' => array(
-            	    'FriendlyName'      => $opt_num++.'- Verificações por requisição',
-            	    'Type'              => 'text',
-    				'Size'				=> '2',
-    				'Default' 			=> '100',
-            	    'Description'       => 'Número máximo de transações consultadas por vez. As consultas à API iugu são realizadas em fila onde todas as faturas a verificar são divididas em lotes, cuja quantidade é o valor definido nesse campo.',
-            	),
+    			
     		);
     		$footer = array('footer' => array(
     				'Description' => '<div class="gefip_section">
@@ -347,32 +313,18 @@ if(!function_exists('gofasefipix_config')){
     				</div>',
     			),
     		);
-			if(file_exists(__DIR__.'/custom/config.php')){
-				include __DIR__.'/custom/config.php';
-				if(is_array($gefip_custom_config) and is_array($renderize) and is_array($footer)){
-					$separator_custom = ['separator_custom' => [
-						'Description' => '
-							<div class="gefip_separator">
-								<h4>Configurações personalizadas</h4>
-							</div>',
-						],
-					];
-					$gefip_config = array_merge($renderize,$separator_custom,$gefip_custom_config,$footer);
-				}
-			}
-    		if(!file_exists(__DIR__.'/custom/config.php') || !$gefip_custom_config and (is_array($renderize) and is_array($footer))){
-    			$gefip_config = array_merge($renderize,$footer);
-    		}
+			$gefip_config = array_merge($renderize,$footer);
 		}
     	return $gefip_config;
     }
 }
 if(!function_exists('gofasefipix_link')){
     function gofasefipix_link($params){
-		if(stripos($_SERVER['REQUEST_URI'], 'viewinvoice.php') !== false ){
-			$enable_pix = gefip_enable_pix();
+		if(stripos($_SERVER['REQUEST_URI'], 'viewinvoice') !== false ){
+			$gefip_webhook = gefip_webhook();
+			$log['webhook'] = $gefip_webhook;
 		}
-    	//if(stripos($_SERVER['REQUEST_URI'], 'viewinvoice.php') !== false ){
+    	if(stripos($_SERVER['REQUEST_URI'], 'viewinvoice') !== false ){
     		$log['params'] = $params;
     		if($params['amount'] >= $params['minimunamount']){	
     			$result .= '<script>
@@ -392,40 +344,46 @@ if(!function_exists('gofasefipix_link')){
     			</script>';
     			$result .= '<input type="hidden" id="system_url" value="'.gefip_whmcs_url('whmcs_url').'">';
     			$result .= '<input type="hidden" id="invoice_id" value="'.$params['invoiceid'].'">';
-				$result .= '<script type="text/javascript" src="'.gefip_whmcs_url('whmcs_url').'/modules/gateways/gofasefipix/scripts.js" charset="UTF-8"></script>';
-			
+				//$result .= '<script type="text/javascript" src="'.gefip_whmcs_url('whmcs_url').'/modules/gateways/gofasefipix/scripts.js" charset="UTF-8"></script>';
+				$result .= '<script>
+				$(document).ready(function () {
+					var system_url = $("#system_url").val();
+					var invoice_id = $("#invoice_id").val();
+					var get_url = "modules/gateways/gofasefipix.php";
+					setInterval(function () {
+						$.get(
+							system_url + get_url,
+							{ invoice_id: invoice_id },
+							function (data) {
+								if (data == "CONCLUIDA") {
+									window.location.reload();
+								}
+							}
+						);
+					}, 1000); // Every 1 second
+				});
+				
+				</script>';
     			$params_api = gefip_api_connect();
-				if(file_exists(__DIR__.'/custom/params.php')){
-					include __DIR__.'/custom/params.php';
-				}
+				
     			$customer = gefip_customer($params['clientdetails']['id']);
     			$log['customer'] = $customer;
     			$saved_qrcode = gefip_get_local_qrc($params['invoiceid']);
-    			$saved_qrcode_amount = (int)$saved_qrcode['amount']; // 4898
-    			$invoice_int_amount = (int)preg_replace("/[^0-9]/", "", $params['amount']); // 4898
-    			$saved_qrcode_float_amount = (float)number_format(($saved_qrcode['amount']/100), 2,'.',''); // 48.98
-    			$log['saved_qrcode_amount'] = $saved_qrcode_amount;
-    			$log['invoice_int_amount'] = $invoice_int_amount;
-    			$log['saved_qrcode_float_amount'] = $saved_qrcode_float_amount;
-    			$log['saved_qrcode'] = $saved_qrcode;
-    			$GetInvoiceResults			= localAPI('getinvoice',array('invoiceid'=>$params['invoiceid'] ), (int)gefip_setup_admin()['id'] );
-    			$datediff = gefip_datediff($GetInvoiceResults['duedate'],$params['diasparavencimento']);
-    			$log['datediff'] = $datediff;
-    			$now_int = (int)date('Ymd');
-    			$billet_duedate_int = (int)preg_replace("/[^0-9]/", "", $saved_qrcode['duedate']);
-    			if($saved_qrcode['qrcode'] and $saved_qrcode_amount === $invoice_int_amount and $billet_duedate_int >= $now_int ){
-    				$charge_verify = gefip_charge_verify($saved_qrcode['charge_id']);
+    			
+				$GetInvoiceResults			= localAPI('getinvoice',array('invoiceid'=>$params['invoiceid'] ), (int)gefip_setup_admin()['id'] );
+    			
+    			if($saved_qrcode['qrcode'] and (float)$saved_qrcode['amount'] === (float)$params['amount']){
+    				$charge_verify = gefip_charge_verify($saved_qrcode['txid']);
     				$log['charge_verify'] = $charge_verify;
-    				if((string)$charge_verify['result']['status'] === (string)'paid'){
-    					$add_trans = gefip_add_trans($params['clientdetails']['id'], $params['invoiceid'], (float)number_format( $charge_verify['result']['total_paid_cents']/100,  2, '.', ''), (float)number_format( $charge_verify['result']['taxes_paid_cents']/100,  2, '.', ''), 'gefip-'.$saved_qrcode['charge_id'].'-'.$params_api['api_mode'], 'Pix pago - confirmação ao acessar a fatura');
-    					header_remove();
+    				if((string)$charge['result']['status'] === (string)'CONCLUIDA'){
+    					$add_trans = gefip_add_trans($params['clientdetails']['id'],$params['invoiceid'], (float)$charge['result']['valor']['original'], gefip_fee($charge['result']['valor']['original']), 'gefip-'.$params_api['api_mode'].'-'.$qrcode['txid'], 'Pix pago - confirmação ao acessar a fatura');
+						header_remove();
     					header("Location: ".gefip_whmcs_url('whmcs_url').'/viewinvoice.php?id='.$params['invoiceid'],true,303);
     					exit;
     				}
     				$result .= $params['message'];
-					$result .= '<img style="width: 200px;border: 1px solid #ccc;" src="'.$saved_qrcode['qrcode'].'">';
-    				//$result .= '<a target="_blank" class="btn btn-default" style=" float: left;font-size: 14px;" href="'.$saved_qrcode['qrcode'].'">Visualizar o Pix</a>';
-    				$result .= '<input value="'.$saved_qrcode['qrcode_text'].'" id="qrcodeforcopy" style="width: 0px;height: 0px;font-size: 0px;padding: 0px;display:none;">';
+					$result .= '<img style="width: 200px;border: 1px solid #ccc;" src="'.$saved_qrcode['qrcode_image'].'">';
+    				$result .= '<input value="'.$saved_qrcode['qrcode'].'" id="qrcodeforcopy" style="width: 0px;height: 0px;font-size: 0px;padding: 0px;display:none;">';
     				$result .= '<button style="position: relative;font-size: 14px; display: inline-block;width: 200px;"  id="copy_tooltip" class="btn btn-default" onclick="copy_tooltip()" onmouseout="outFunc()">Pix Copia e Cola</button>';
     				$log['saved_qrcode'] = $saved_qrcode;
     				if($error){
@@ -446,7 +404,7 @@ if(!function_exists('gofasefipix_link')){
     					return $result;
     				}
     			}
-    			if(!$saved_qrcode['qrcode'] || !$saved_qrcode['qrcode_text'] || $saved_qrcode_amount !== $invoice_int_amount || $billet_duedate_int < $now_int){
+    			if(!$saved_qrcode['qrcode'] || !$saved_qrcode['qrcode_image'] || (float)$saved_qrcode_amount !== (float)$params['amount']){
     				$line_items = array();
     				foreach( $GetInvoiceResults['items']['item'] as $Value){
     					if($Value['amount'] < (float)'0.00'){
@@ -465,48 +423,42 @@ if(!function_exists('gofasefipix_link')){
 						}
     				}
 					$postfields = [
-    					'email'=>$customer['email'],
-						'due_date'=> $datediff['duedate'],
-						//'expires_in'=>$params['diasparavencimento'],
-						'items'=>$line_items,
-						'payable_with'=>['pix'],
-						'notification_url'=>gefip_whmcs_url('whmcs_url').'/modules/gateways/gofasefipix.php',
-						'payer' => [
-							'name'=> $customer['name'],
-							'cpf_cnpj'=> $customer['document'],
-							'email'=>$customer['email'],
-							'address'=> [
-								'zip_code'=> $customer['postcode'],
-								'street'=> $customer['address'],
-								'number'=> $customer['number'],
-								'complement'=> $customer['complement'],
-								'district'=> $customer['neighborhood'],
-								'city'=> $customer['city'],
-								'state'=> $customer['state']
-							],
+						'calendario'=> [
+						  'expiracao'=> 3600
 						],
-    				];
+						'devedor'=> [
+						  'cpf'=> $customer['cpf'],
+						  'nome'=> $customer['name']
+						],
+						'valor'=> [
+						  'original'=> number_format($params['amount'], 2,'.',''),
+						],
+						'chave'=> $params['pixkey'],
+						'solicitacaoPagador'=> (string)(substr( implode("\n",$line_items),  0, 250))
+					];
+					
     				$qrcode_ = gefip_charge($postfields);
+					
     				if((int)$qrcode_['result_code'] !== (int)200){
-    					//$error .= $qrcode_['result_code'].': ';
+    					$error .= $qrcode_['result_code'].': ';
     					if(is_array($qrcode_['result']['errors'])){
 							foreach($qrcode_['result']['errors'] as $key=>$value){
     							$error .= $key.' '.implode(", ",$value);
     						}
 						}
     				}
-    				$log['postfields_json'] = json_encode($postfields['charge']);
+    				$log['postfields_json'] = json_encode($postfields);
     				$log['qrcode_'] = $qrcode_;
-    				if($qrcode_['result']['id']){
-                        if(!$saved_qrcode['qrcode'] || !$saved_qrcode['qrcode_text']){
+    				if($qrcode_['result']['qrcode']){
+                        if(!$saved_qrcode['qrcode'] || !$saved_qrcode['qrcode_image']){
     						$save_qrc = gefip_save_qrc(
     							[
     								'invoice_id'=>$params['invoiceid'],
-    								'charge_id'=>$qrcode_['result']['id'],
-    								'amount'=>$invoice_int_amount,
-    								'duedate'=>(string)$qrcode_['result']['due_date'],
-    								'qrcode'=>$qrcode_['result']['pix']['qrcode'],
-    								'qrcode_text'=>$qrcode_['result']['pix']['qrcode_text'],
+    								'id'=>$qrcode_['result']['id'],
+									'txid'=>$qrcode_['result']['cob']['txid'],
+    								'amount'=>$params['amount'],
+    								'qrcode'=>$qrcode_['result']['qrcode'],
+    								'qrcode_image'=>$qrcode_['result']['imagemQrcode'],
     								'api_mode'=>$params_api['api_mode'],
     							]
     						);
@@ -518,11 +470,11 @@ if(!function_exists('gofasefipix_link')){
     						$update_qrc = gefip_update_qrc(
     							[
     								'invoice_id'=>$params['invoiceid'],
-    								'charge_id'=>$qrcode_['result']['id'],
-    								'amount'=>$invoice_int_amount,
-    								'duedate'=>(string)$qrcode_['result']['due_date'],
-    								'qrcode'=>$qrcode_['result']['pix']['qrcode'],
-    								'qrcode_text'=>$qrcode_['result']['pix']['qrcode_text'],
+    								'id'=>$qrcode_['result']['id'],
+									'txid'=>$qrcode_['result']['cob']['txid'],
+    								'amount'=>$params['amount'],
+    								'qrcode'=>$qrcode_['result']['qrcode'],
+    								'qrcode_image'=>$qrcode_['result']['imagemQrcode'],
     								'api_mode'=>$params_api['api_mode'],
     							]
     						);
@@ -532,9 +484,9 @@ if(!function_exists('gofasefipix_link')){
     						}
     					}
     					$result .= $params['message'];
-						$result .= '<img style="width: 200px;border: 1px solid #ccc;" src="'.$qrcode_['result']['pix']['qrcode'].'">';
+						$result .= '<img style="width: 200px;border: 1px solid #ccc;" src="'.$qrcode_['result']['imagemQrcode'].'">';
     					//$result .= '<a target="_blank" class="btn btn-default" style=" float: left;font-size: 14px;" href="'.$qrcode_['result']['pix']['qrcode'].'">Visualizar o Pix</a>';
-    					$result .= '<input value="'.$qrcode_['result']['pix']['qrcode_text'].'" id="qrcodeforcopy" style="width: 0px;height: 0px;font-size: 0px;padding: 0px;display:none;">';
+    					$result .= '<input value="'.$qrcode_['result']['qrcode'].'" id="qrcodeforcopy" style="width: 0px;height: 0px;font-size: 0px;padding: 0px;display:none;">';
     					$result .= '<button style="position: relative;font-size: 14px; display: inline-block;width: 200px;"  id="copy_tooltip" class="btn btn-default" onclick="copy_tooltip()" onmouseout="outFunc()">Pix Copia e Cola</button>';
     				}
     			}
@@ -561,58 +513,148 @@ if(!function_exists('gofasefipix_link')){
     			$error .= 'O valor mínimo para utilizar esse método de pagamento é '.number_format( $params['minimunamount'] ,  2, ',', '.').'.';
     			return $error;
     		}
-    	//}
+    	}
     }
+}
+if( !function_exists('gefip_get_token') ){
+	function gefip_get_token(){
+		$params_api = gefip_api_connect();
+		$curl = curl_init($params_api['charge_url'].'/oauth/token');
+		$client_id=$params_api['clientid'];
+		$client_secret=$params_api['clientsecret'];
+  		curl_setopt($curl, CURLOPT_HTTPHEADER, array(
+			'Authorization: Basic '. base64_encode("$client_id:$client_secret"),
+			'Content-Type: application/json',
+			'partner-token: baaf5b95d55433890bd835cf006772b9462bde8f',
+		));
+  		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+  		curl_setopt($curl, CURLOPT_POST, true);
+  		curl_setopt($curl, CURLOPT_SSLCERT, $params_api['certificate']);
+  		curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode(array(
+			'grant_type'=>'client_credentials',
+			'partner_token'=>'baaf5b95d55433890bd835cf006772b9462bde8f',
+		)));
+  		$json = json_decode(curl_exec($curl), true);
+		if($json['access_token']){
+			return array('access_token'=>$json['access_token']);
+		}
+		else {
+			if($json){
+	  			$error	.= 'Erro: '.implode(', ', $json);
+			}
+			return array('error'=> $error, 'debug'=> $json);
+		}
+	}
 }
 if(!function_exists('gefip_charge')){
 	function gefip_charge($postfields){
 		$params_api = gefip_api_connect();
-    	$curl = curl_init();
-		curl_setopt_array($curl, array(
-			CURLOPT_URL => $params_api['charge_url'].'/invoices',
-			CURLOPT_RETURNTRANSFER => true,
-			CURLOPT_ENCODING => '',
-			CURLOPT_MAXREDIRS => 10,
-			CURLOPT_TIMEOUT => 0,
-			CURLOPT_FOLLOWLOCATION => true,
-			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-			CURLOPT_HTTPHEADER => array(
-		    	'Authorization: Basic '.base64_encode((string)$params_api['api_token'].':'),
-				'Content-Type: application/json',
-				'Accept: application/json',
-		  	),
-			CURLOPT_CUSTOMREQUEST => 'POST',
-			CURLOPT_POSTFIELDS => json_encode($postfields),
-		));
-		$result = json_decode(curl_exec($curl),true);
-		$result_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+    	$access_token = gefip_get_token();
+		$curl = curl_init($params_api['charge_url'].'/v2/cob');
+  		curl_setopt($curl, CURLOPT_HTTPHEADER, array(
+			'Authorization: Bearer '.$access_token['access_token'],
+			'Content-Type: application/json',
+			'partner-token: baaf5b95d55433890bd835cf006772b9462bde8f'));
+  		curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+  		curl_setopt($curl, CURLOPT_POST, 1);
+		curl_setopt($curl, CURLOPT_SSLCERT, $params_api['certificate']);
+  		curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($postfields));
+		$result_ = json_decode(curl_exec($curl),true);
+		$result_code_ = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 		curl_close($curl);
+
+		if($result_['txid']){
+			$curl = curl_init($params_api['charge_url'].'/v2/loc/'.$result_['loc']['id'].'/qrcode');
+  			curl_setopt($curl, CURLOPT_HTTPHEADER, array(
+				'Authorization: Bearer '.$access_token['access_token'],
+				'Content-Type: application/json',
+				'partner-token: baaf5b95d55433890bd835cf006772b9462bde8f'));
+  			curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+			curl_setopt($curl, CURLOPT_SSLCERT, $params_api['certificate']);
+			$result = json_decode(curl_exec($curl),true);
+			$result['id']=$result_['loc']['id'];
+			$result['cob']=$result_;
+			$result_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+			curl_close($curl);
+		}
 		return ['result_code'=>$result_code,'result'=>$result];
 	}
 }
 if(!function_exists('gefip_charge_verify')){
-	function gefip_charge_verify($charge_id){
+	function gefip_charge_verify($id){
 		$params_api = gefip_api_connect();
-		$curl = curl_init();
-		curl_setopt_array($curl, array(
-			CURLOPT_URL => $params_api['charge_url'].'/invoices/'.$charge_id,
-			CURLOPT_RETURNTRANSFER => true,
-			CURLOPT_ENCODING => '',
-			CURLOPT_MAXREDIRS => 10,
-			CURLOPT_TIMEOUT => 0,
-			CURLOPT_FOLLOWLOCATION => true,
-			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-			CURLOPT_CUSTOMREQUEST => 'GET',
-			CURLOPT_HTTPHEADER => array(
-		    	'Authorization: Basic '.base64_encode((string)$params_api['api_token'].':'),
+		$access_token = gefip_get_token();
+		$curl = curl_init($params_api['charge_url'].'/v2/cob/'.$id);
+  			curl_setopt($curl, CURLOPT_HTTPHEADER, array(
+				'Authorization: Bearer '.$access_token['access_token'],
 				'Content-Type: application/json',
-				'Accept: application/json',
-		  	),
-		));
-		$result = json_decode(curl_exec($curl),true);
-		$result_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-		curl_close($curl);
+				'partner-token: baaf5b95d55433890bd835cf006772b9462bde8f'));
+  			curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+			curl_setopt($curl, CURLOPT_SSLCERT, $params_api['certificate']);
+			$result = json_decode(curl_exec($curl),true);
+			$result_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+			curl_close($curl);
 		return ['result_code'=>$result_code,'result'=>$result];
+	}
+}
+if(!function_exists('gefip_webhook')){
+	function gefip_webhook(){
+		$params_api = gefip_api_connect();
+		$access_token = gefip_get_token();
+		$params = getGatewayVariables('gofasefipix');
+		foreach( Capsule::table('tblconfiguration')->where('setting','=','gefip_webhook')->get(['value','created_at']) as $webhook_ ){
+			$webhook				= json_decode($webhook_->value, true);
+			$webhook['created_at']	= $webhook_->created_at;
+		}
+		$webhook_url = gefip_whmcs_url('whmcs_url').'modules/gateways/gofasefipix/includes/';
+		if($webhook['webhook_url'] !== $webhook_url || $webhook['pixkey'] !== $params['pixkey'] || !$webhook['webhook_url'] || !$webhook['pixkey']){
+			$curl = curl_init($params_api['charge_url'].'/v2/webhook/'.$params['pixkey']);
+			curl_setopt($curl, CURLOPT_HTTPHEADER, array(
+				'Authorization: Bearer '.$access_token['access_token'],
+				'Content-Type: application/json',
+				'partner-token: baaf5b95d55433890bd835cf006772b9462bde8f',
+				'x-skip-mtls-checking: true',));
+  			curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+			curl_setopt($curl, CURLOPT_SSLCERT, $params_api['certificate']);
+			curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'PUT');
+			curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode(['webhookUrl'=>$webhook_url]));
+			$result = json_decode(curl_exec($curl),true);
+			$result_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+			curl_close($curl);
+		}
+		if((int)$result_code === 200){
+			if(!empty($webhook['webhook_url']) || !empty($webhook['pixkey'])){
+				try {
+					Capsule::table('tblconfiguration')->where('setting','gefip_webhook')->update([
+						'value' => json_encode([
+							'webhook_url'=>$webhook_url,
+							'pixkey'=>$params['pixkey'],
+						]),
+						'created_at' => $webhook['created_at'],
+						'updated_at' => date("Y-m-d H:i:s")]
+					);
+				}
+				catch (\Exception $e){
+					$error .= $e->getMessage();
+				}
+			}
+			else{
+				try { Capsule::table('tblconfiguration')->insert(array(
+					'setting' => 'gefip_webhook',
+					'value' => json_encode([
+						'webhook_url'=>$webhook_url,
+						'pixkey'=>$params['pixkey'],
+					]),
+					'created_at' => date("Y-m-d H:i:s"),
+					'updated_at' => date("Y-m-d H:i:s")
+				));
+				}
+				catch (\Exception $e){
+					$error .= $e->getMessage();
+				}
+			}
+		}
+		return ['webhook_url'=>$webhook_url,'result_code'=>$result_code,'result'=>$result,'error'=>$error];
 	}
 }
 if(!function_exists('gefip_get_string_between')){
@@ -625,32 +667,9 @@ if(!function_exists('gefip_get_string_between')){
 		return substr($string,$ini,$len);
 	}
 }
-if(!function_exists('gefip_file_exists_check')){ #10
-    function gefip_file_exists_check($file,$sucess_msg=NULL,$error_msg=NULL){
-		$file = gefip_whmcs_url('root_dir').$file;
-    	if(!file_exists($file)){
-			if(!$error_msg){
-				$error_msg .= '<p style="color: red;padding: 10px;border-left: 2px solid red;padding: 5px 10px 12px 12px;">';
-				$error_msg .= '<span style="font-size: 24px;">Atenção!</span><br>';
-	    	    $error_msg .= 'Arquivo <b>'.$file.'</b> não encontrado.';
-				$error_msg .= '<br>É necessário instalar o <i>hook</i> que acompanha o módulo para todos os recursos funcionarem. <a style="text-decoration:underline;color:red" target="_blank" href="https://gofas.net/gefip/#instalation">Saiba mais </a>&#10138;';
-				$error_msg .= '</p>';
-				return $error_msg;
-			}
-			if($error_msg){
-				return $error_msg;
-			}
-		}
-		else{
-			if($sucess_msg){
-				return $sucess_msg;
-			}
-    	    return;
-    	}
-    }
-}
+
 if(!function_exists('gefip_add_trans')){
-	function gefip_add_trans( $user_id, $invoice_id, $amount, $fee, $charge_id, $description ){
+	function gefip_add_trans( $user_id, $invoice_id, $amount, $fee, $id, $description ){
 		$params = getGatewayVariables('gofasefipix');
  		$addtransvalues['userid'] = $user_id;
  		$addtransvalues['invoiceid'] = $invoice_id;
@@ -658,7 +677,7 @@ if(!function_exists('gefip_add_trans')){
  		$addtransvalues['amountin'] = $amount;
  		$addtransvalues['fees'] = $fee;
  		$addtransvalues['paymentmethod'] = 'gofasefipix';
- 		$addtransvalues['transid'] = $charge_id;
+ 		$addtransvalues['transid'] = $id;
  		$addtransvalues['date'] = date('d/m/Y');
 		$addtransresults = localAPI( "addtransaction", $addtransvalues, (int)gefip_setup_admin()['id']);
 		$delete_qrc = Capsule::table('gofasefipix')->where('invoice_id', '=',$invoice_id)->delete();
@@ -829,6 +848,9 @@ if(!function_exists('gefip_customer')){
 			'birthday'=>['raw'=>$birthday_raw,'br'=>$birthday_br,'us'=>$birthday_us],
 			'custom_fields'=>$custom_fields,
 		];
+		if($cpf){
+			$customer['cpf']=$cpf;
+		}
 		return $customer;
 	}
 }
@@ -836,11 +858,12 @@ if(!function_exists('gefip_save_qrc')){
 	function gefip_save_qrc($qr_code){
 		$data = array(
 			'invoice_id'=>$qr_code['invoice_id'],
-			'charge_id'=>$qr_code['charge_id'],
+			'id'=>$qr_code['id'],
+			'txid'=>$qr_code['txid'],
 			'amount'=>$qr_code['amount'],
-			'duedate'=>$qr_code['duedate'],
+			//'duedate'=>$qr_code['duedate'],
 			'qrcode'=>$qr_code['qrcode'],
-			'qrcode_text'=>$qr_code['qrcode_text'],
+			'qrcode_image'=>$qr_code['qrcode_image'],
 			'api_mode'=>$qr_code['api_mode'],
 			'created_at'=>date("Y-m-d H:i:s"),
 			'updated_at'=>date("Y-m-d H:i:s"),
@@ -1100,39 +1123,7 @@ if(!function_exists('gefip_setup_admin')){
 	}
 	return $admin;
 }}
-if(!function_exists('gefip_datediff')){
-	function gefip_datediff($invoice_duedate,$diasparavencimento=1){
-		if( $diasparavencimento and $diasparavencimento > 0 and $diasparavencimento > 1){
-			$diasParaVencimento = '+'.$diasparavencimento.' days';
-		}
-		if( $diasparavencimento == '0'){
-			$diasParaVencimento = '+1 day';
-		}
-		if( $diasparavencimento == '1'){
-			$diasParaVencimento = '+1 day';
-		}
-		if( $diasparavencimento > '30'){
-			$diasParaVencimento = '+30 days';
-		}
-		if(!$diasparavencimento ){
-			$diasParaVencimento = '+1 day';
-		}
-		if( $invoice_duedate > date('Y-m-d') ){
-			$billet_duedate = $invoice_duedate;
-		}
-		if( $invoice_duedate === date('Y-m-d') ){
-			$billet_duedate = date('Y-m-d', strtotime($diasParaVencimento));
-		}
-		// Se fatura já venceu, data de vencimento do qrcode = Hoje + X dia(s)
-		if( $invoice_duedate < date('Y-m-d') ){
-			$billet_duedate = date('Y-m-d', strtotime( $diasParaVencimento ));
-		}
-		$now = (int)date('Ymd');
-		$due_date = (int)preg_replace("/[^0-9]/", "", $billet_duedate);
-		$datediff = $due_date-$now;
-		return ['datediff'=>$datediff,'duedate'=>$billet_duedate];
-	}
-}
+
 if(!function_exists('gefip_get_protected_property')){
 	function gefip_get_protected_property($object, $property){
 	    $reflectedClass = new \ReflectionClass($object);
@@ -1144,8 +1135,8 @@ if(!function_exists('gefip_get_protected_property')){
 if(!function_exists('gefip_qrcode_mergetags_fields')){
     function gefip_qrcode_mergetags_fields($vars){
         $gefip_merge_fields = array();
-	    $gefip_merge_fields['gefip_qrcode']		= 'Efí Pix: URL a imagem do QR code';
-		$gefip_merge_fields['gefip_qrcode_text']	= 'Efí Pix: Pix Copia e Cola';
+	    $gefip_merge_fields['gefip_qrcode_image']	= 'Efí Pix: URL a imagem do QR code';
+		$gefip_merge_fields['gefip_qrcode']			= 'Efí Pix: Pix Copia e Cola';
         return $gefip_merge_fields;
     }
 }
@@ -1164,7 +1155,7 @@ if(!function_exists('gefip_qrcode_mergetags')){
 			if( $invoice['total'] > '0.00' and $invoice['paymentmethod'] === 'gofasefipix'){
 				// Saved Billets
 				$qrcode_saved = array();
-				foreach( Capsule::table('gofasefipix')->where('invoice_id','=',$vars['relid'])->get(['qrcode','qrcode_text']) as $key => $value ){
+				foreach( Capsule::table('gofasefipix')->where('invoice_id','=',$vars['relid'])->get(['qrcode','qrcode_image']) as $key => $value ){
 					$qrcodes_for_invoice[$key]=json_decode(json_encode($value), true);
 				}
 				$qrcode_saved = $qrcodes_for_invoice['0']; // Array
@@ -1172,8 +1163,8 @@ if(!function_exists('gefip_qrcode_mergetags')){
 				if (!array_key_exists('gefip_qrcode', $vars['mergefields'])) {
 					$gefip_merge_fields['gefip_qrcode'] = $qrcode_saved['qrcode'];
 				}
-				if (!array_key_exists('gefip_qrcode_text', $vars['mergefields'])) {
-					$gefip_merge_fields['gefip_qrcode_text'] = $qrcode_saved['qrcode_text'];
+				if (!array_key_exists('gefip_qrcode_image', $vars['mergefields'])) {
+					$gefip_merge_fields['gefip_qrcode_image'] = $qrcode_saved['qrcode_image'];
 				}
 			}
     	}
@@ -1183,235 +1174,27 @@ if(!function_exists('gefip_qrcode_mergetags')){
 		return $gefip_merge_fields;
     }
 }
-if(!function_exists('gefip_check_schedule')){
-    function gefip_check_schedule(){
-        $params = getGatewayVariables('gofasefipix');
-        $start_at = substr(preg_replace('/[^\da-z]/i','',$params['verifypaymentsat']),0,4) ?: '0500';
-        $max_invoices = $params['maxinvoicespercheck'] ?: '100';
-        $total_queue_invoices = Capsule::table('tblinvoices')->where('status','=','Unpaid')->where('paymentmethod','=','gofasefipix')->count();
-		foreach( Capsule::table('tbltransientdata')
-            ->where('name','=','iugu.Pix.Charge.Verification')
-            ->orderBy('id','desc')
-            ->take('1')
-            ->get() as $value){
-                $tbltransientdata=json_decode(json_encode($value),true);
-                $tbltransientdata=json_decode($tbltransientdata['data'],true);
-        }
-		if((int)$start_at === 0){
-			$start_at_ = '24';
-		}
-		else{
-			$start_at_ = $start_at;
-		}
-		if((int)date('H') >= (int)$start_at_){
-			$next_check_schedule = date('Ymd',strtotime('+1 day')).$start_at;
-		}
-		if((int)date('H') < (int)$start_at_){
-			$next_check_schedule = date('Ymd').$start_at;
-		}
-        if((int)$total_queue_invoices >= 1){
-            if(is_array($tbltransientdata) and (int)date('YmdHi') >= (int)$tbltransientdata['next']){
-                foreach( Capsule::table('tblinvoices')
-                    ->where('status','=','Unpaid')
-                    ->where('paymentmethod','=','gofasefipix')
-                    ->orderBy('id','asc')
-                    ->take($max_invoices)
-                    ->whereNotIn('id', $tbltransientdata['skip_invoices'] ?: ['0'])
-                    ->get(['id']) as $queue_invoices_){
-                        if($queue_invoices_->id){
-                            $queue_invoices[]=$queue_invoices_->id;
-                        }
-                        else{
-                            $queue_invoices=false;
-                        }
-                }
-                if($queue_invoices){ // <----
-                    if($tbltransientdata['skip_invoices']){
-                        $skip_invoices = $tbltransientdata['skip_invoices'];
-                    }
-                    else{
-                        $skip_invoices = [];
-                    }
-                    $data = [
-                        'name'=>'iugu.Pix.Charge.Verification',
-                        'data'=>json_encode([
-                            'next'=>date('YmdHi',strtotime('+300 seconds')),
-                            'skip_invoices'=> array_merge($skip_invoices,$queue_invoices),
-                        ]),
-                        'expires'=>strtotime('+2 days'),
-                    ];
-                    $transientdata = Capsule::table('tbltransientdata')->where('name','=','iugu.Pix.Charge.Verification')->update($data);
-					unset($transientdata);
-                    return $queue_invoices;
-                }
-                if(!$queue_invoices){ // <----
-                    $data = [
-                        'name'=>'iugu.Pix.Charge.Verification',
-                        'data'=>json_encode([
-                            'next'=>$next_check_schedule,
-                            'skip_invoices'=> '',
-                        ]),
-                        'expires'=>strtotime('+2 days'),
-                    ];
-                    $transientdata = Capsule::table('tbltransientdata')->where('name','=','iugu.Pix.Charge.Verification')->update($data);
-					unset($transientdata);
-                    return false;
-                }
-            }
-            if(!is_array($tbltransientdata)){
-                foreach( Capsule::table('tblinvoices')
-                    ->where('status','=','Unpaid')
-                    ->where('paymentmethod','=','gofasefipix')
-                    ->orderBy('id','asc')
-                    ->take($max_invoices)
-                    //->whereNotIn('id', $tbltransientdata['skip_invoices'])
-                    ->get(['id']) as $queue_invoices_){
-                        $queue_invoices[]=$queue_invoices_->id;
-                }
-                if($queue_invoices){ // <----
-                    $data = [
-                        'name'=>'iugu.Pix.Charge.Verification',
-                        'data'=>json_encode([
-                            'next'=>date('YmdHi',strtotime('+300 seconds')),
-                            'skip_invoices'=> $queue_invoices,
-                        ]),
-                        'expires'=>strtotime('+2 days'),
-                    ];
-                    $transientdata = Capsule::table('tbltransientdata')->insert($data);
-					unset($transientdata);
-                    return $queue_invoices;
-                }
-                if(!$queue_invoices){ // <----
-                    $data = [
-                        'name'=>'iugu.Pix.Charge.Verification',
-                        'data'=>json_encode([
-                            'next'=>$next_check_schedule,
-                            'skip_invoices'=> '',
-                        ]),
-                        'expires'=>strtotime('+2 days'),
-                    ];
-                    $transientdata = Capsule::table('tbltransientdata')->insert($data);
-					unset($transientdata);
-                    return false;
-                }
-            }
-        }
-		if((int)$total_queue_invoices <1 and !empty($tbltransientdata['skip_invoices'])){
-			$data = [
-				'name'=>'iugu.Pix.Charge.Verification',
-				'data'=>json_encode([
-					'next'=>$next_check_schedule,
-					'skip_invoices'=> '',
-				]),
-				'expires'=>strtotime('+2 days'),
-			];
-			$transientdata = Capsule::table('tbltransientdata')->update($data);
-			unset($transientdata);
-			return false;
-		}
-		if((int)$total_queue_invoices <1 and !is_array($tbltransientdata)){
-			$data = [
-				'name'=>'iugu.Pix.Charge.Verification',
-				'data'=>json_encode([
-					'next'=>$next_check_schedule,
-					'skip_invoices'=> '',
-				]),
-				'expires'=>strtotime('+2 days'),
-			];
-			$transientdata = Capsule::table('tbltransientdata')->insert($data);
-			unset($transientdata);
-			return false;
-        }
-		return;
-    }
-}
-if(!function_exists('gefip_check_status_updates')){
-	function gefip_check_status_updates($vars){
+if(!function_exists('gefip_fee')){
+    function gefip_fee($amount){
 		$params = getGatewayVariables('gofasefipix');
-		$params_api = gefip_api_connect();
-	    //<
-	    $check_schedule = gefip_check_schedule();
-	    if(!is_array($check_schedule)){
-	        return;
-	    }
-	    //>
-	    if(is_array($check_schedule)){
-		    try {
-		    	$log = array();
-		    	$qrcode = array();
-		    	$invoices = array();
-		    	// Unpaid invoices IDs
-		    	foreach( Capsule::table('tblinvoices')
-	                ->where('status','=','Unpaid')
-	                ->where('paymentmethod','=','gofasefipix')
-	                ->orderBy('id','asc')
-	                ->whereIn('id',$check_schedule)
-	                ->get(['id','total','userid']) as $tblinvoices){
-		    		foreach( Capsule::table('gofasefipix')->where('invoice_id','=',$tblinvoices->id )->get(['charge_id']) as $local_qrcode){
-		    			$qrcode = gefip_charge_verify($local_qrcode->charge_id);
-		    			$qrcodes[$local_qrcode->charge_id] = $qrcode;
-		    			if((int)$qrcode['result_code'] !== 200){
-		    				$error	.= 'Erro ao verificar Pix: ' . json_encode($qrcode);
-		    			}
-		    			if($qrcode['result']['status'] === 'paid') {
-		    				$invoices[$tblinvoices->id] = [
-		    					'invoice_id'=>$tblinvoices->id,
-		    					'trans_id'=>$local_qrcode->charge_id,
-		    					'transaction_id'=>$local_qrcode->charge_id,
-		    					'total'=>$tblinvoices->total,
-		    					'user_id'=>$tblinvoices->userid,
-		    					'paid_amount'=>(float)number_format(($qrcode['result']['total_paid_cents']/100), 2,'.',''),
-		    					'fee'=>(float)number_format(($qrcode['result']['taxes_paid_cents']/100), 2,'.','')
-		    				];
-		    			}
-		    		} // End Foreach
-		    	} // End Foreach
-		    	// Add Payments
-		    	if (!empty($invoices)) {
-		    		foreach ($invoices as $key => $value) {
-		    			$log['invoice_value'][$value['invoice_id']] = $value;
-		    			$log['invoice_id'][$value['invoice_id']] = $value['invoice_id'];
-		    			if ( (float)$value['paid_amount'] > (float)$value['total'] ) {
-		    				$update_invoice = localAPI('updateinvoice', array( 'invoiceid' => $value['invoice_id'], 'newitemdescription' => array('Acréscimos calculados na emissão do Pix'),'newitemamount' => array((float)($value['paid_amount'] - $value['total']))), (int)gefip_setup_admin()['id'] );
-		    			}
-		    			// - Billet amount is less than the invoice amount
-		    			if ( (float)$value['paid_amount'] < (float)$value['total'] ) {
-		    				$update_invoice = localAPI('updateinvoice', array( 'invoiceid' => $value['invoice_id'], 'newitemdescription' => array('Descontos calculados na emissão do Pix'),'newitemamount' => array((float)($value['paid_amount'] - $value['total']))), (int)gefip_setup_admin()['id'] );
-		    			}
-					
-	                    $add_trans = gefip_add_trans($value['user_id'],$value['invoice_id'],$value['paid_amount'],$value['fee'],'gefip-'.$params_api['api_mode'].'-'.$value['trans_id'], 'Pix pago - confirmação via cron job');
-		    			$update_invoice_log[$value['invoice_id']]=$update_invoice;
-		    			$add_trans_log[$value['invoice_id']]=$add_trans;
-		    		}
-		    	}
-		    }
-		    catch (Exception $e) {
-		    	$error	.= 'Erro ao listar qrcodes pagos: ' . $e->getMessage();
-		    	$log['error'] = $error;
-		    }
-	    }
-		$log['qrcodes'] = $qrcodes;
-		$log['invoices'] = $invoices;
-		$log['update_invoice'] = $update_invoice;
-		$log['add_trans'] = $add_trans;
-		if($params['log']){
-			logModuleCall('gofasefipix','AfterCronJob',array('module_version'=>gefip_version(),'params'=>$params),'', array($log) );
+		$fee = (float)(((float)$amount/100)*(float)$params['fee']);
+		if($fee > (float)'7.90'){
+			return (float)'7.90';
 		}
-		return;
+		if($fee <= (float)'7.90'){
+			return $fee;
+		}
 	}
 }
 if($_REQUEST['invoice_id']){
-	require_once __DIR__.'./../../../init.php';
-	require_once  __DIR__.'./../../../includes/gatewayfunctions.php';
-	require_once  __DIR__.'./../../../includes/invoicefunctions.php';
 	$params = getGatewayVariables('gofasefipix');
 	$params_api = gefip_api_connect();
 	$invoice = localAPI('getinvoice',array('invoiceid'=> $_REQUEST['invoice_id']),(int)gefip_setup_admin()['id']);
 	if( $invoice['invoiceid']){
 		$qrcode = gefip_get_local_qrc($_REQUEST['invoice_id']);	
-		$charge = gefip_charge_verify($qrcode['charge_id']);
-		if(($charge['result']['status'] === 'paid') and $invoice['status'] !== 'Paid' and (float)$invoice['total'] === (float)($charge['result']['total_cents']/100)){
-			$add_trans = gefip_add_trans($invoice['userid'],$_REQUEST['invoice_id'], (float)number_format( $charge['result']['total_paid_cents']/100,  2, '.', ''), (float)number_format($charge['result']['taxes_paid_cents']/100,  2, '.', ''), 'gefip-'.$params_api['api_mode'].'-'.$qrcode['charge_id'], 'Pix pago - confirmação ao acessar a fatura');			
+		$charge = gefip_charge_verify($qrcode['txid']);
+		if(((STRING)$charge['result']['status'] === (STRING)'CONCLUIDA') and $invoice['status'] !== 'Paid' and (float)$invoice['total'] === (float)$charge['result']['valor']['original']){
+			$add_trans = gefip_add_trans($invoice['userid'],$_REQUEST['invoice_id'], (float)$charge['result']['valor']['original'], gefip_fee($charge['result']['valor']['original']), 'gefip-'.$params_api['api_mode'].'-'.$qrcode['txid'], 'Pix pago - confirmação enquanto o cliente visualizava a fatura');			
 		}
 		if($charge['result']['status']){
 			echo $charge['result']['status'];
@@ -1421,6 +1204,23 @@ if($_REQUEST['invoice_id']){
 		logModuleCall('gofasefipix','callback',array('request'=>$_REQUEST),'', array( 'charge'=>$charge ) );
 	}
 }
-add_hook("AfterCronJob",1,"gefip_check_status_updates");
+if($_POST['id']){
+	$params = getGatewayVariables('gofasefipix');
+	$params_api = gefip_api_connect();
+	$invoice = localAPI('getinvoice',array('invoiceid'=> $_POST['id']),(int)gefip_setup_admin()['id']);
+	if( $invoice['invoiceid']){
+		$qrcode = gefip_get_local_qrc($_POST['id']);	
+		$charge = gefip_charge_verify($qrcode['txid']);
+		if(((string)$charge['result']['status'] === (string)'CONCLUIDA') and $invoice['status'] !== 'Paid' and (float)$invoice['total'] === (float)$charge['result']['valor']['original']){
+			$add_trans = gefip_add_trans($invoice['userid'],$_POST['id'], (float)$charge['result']['valor']['original'], gefip_fee($charge['result']['valor']['original']), 'gefip-'.$params_api['api_mode'].'-'.$qrcode['txid'], 'Pix pago - confirmação via webook /viewinvoice.php');			
+		}
+		if($charge['result']['status']){
+			echo $charge['result']['status'];
+		}
+	}
+	if($params['log']){
+		logModuleCall('gofasefipix','post_1',array('request'=>$_POST),'', array( 'charge'=>$charge ) );
+	}
+}
 add_hook("EmailPreSend",1,"gefip_qrcode_mergetags");
 add_hook("EmailTplMergeFields",1,"gefip_qrcode_mergetags_fields");

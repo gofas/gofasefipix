@@ -5,6 +5,7 @@
  * @see			https://gofas.net/?p=15590
  * @license		https://gofas.net/?p=9340
  * @support		https://gofas.net/?p=14299
- * @version		1.2.0
+ * @version		1.0.0
  */
-// Silence is golden
+header_remove(); 
+header("HTTP/1.1 200 OK");
