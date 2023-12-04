@@ -407,20 +407,8 @@ if(!function_exists('gofasefipix_link')){
     			if(!$saved_qrcode['qrcode'] || !$saved_qrcode['qrcode_image'] || (float)$saved_qrcode_amount !== (float)$params['amount']){
     				$line_items = array();
     				foreach( $GetInvoiceResults['items']['item'] as $Value){
-    					if($Value['amount'] < (float)'0.00'){
-							$line_items[]	= [
-								'description'=>substr( $Value['description'],  0, 80),
-								'quantity'=>1,
-								'price_cents'=> '-'.(int)preg_replace("/[^0-9]/", "", $Value['amount']),
-							];
-						}
-						else{
-							$line_items[]	= [
-    							'description'=>substr( $Value['description'],  0, 80),
-    							'quantity'=>1,
-    							'price_cents'=> (int)preg_replace("/[^0-9]/", "", $Value['amount']),
-    						];
-						}
+						$increment = 0;
+    					$line_items[$increment++] = $Value['description'];
     				}
 					$postfields = [
 						'calendario'=> [
