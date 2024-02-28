@@ -6,7 +6,7 @@
 
 **Fixed bugs:**
 
-- Gera novo QR code após uma hora da última emissão [\#1](https://github.com/mauriciogofas/gofasefipix/issues/1)
+- Lançamento [\#1](https://github.com/mauriciogofas/gofasefipix/issues/1)
 
 
 
