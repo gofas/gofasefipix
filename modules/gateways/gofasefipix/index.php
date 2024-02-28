@@ -268,14 +268,14 @@ if(!function_exists('gofasefipix_config')){
     				'FriendlyName' => $opt_num++.'- Salvar Logs',
     				'Type' => 'yesno',
     				'Default' => 'yes',
-    				'Description' => 'Salva informações de diagnóstico em <a target="_blank" style="text-decoration: underline;" href="'.$whmcs_url['admin_url'].'/systemmodulelog.php">Utilitários > Logs > Log de Módulo</a>. Para funcionar, antes é necessário ativar o debug de módulo clicando em "Ativar Log de Debug". <a target="_blank" style="text-decoration: underline;" href="'.$whmcs_url['admin_url'].'/systemmodulelog.php">VER LOG</a>.',
+    				'Description' => 'Salva informações de diagnóstico em <a target="_blank" style="text-decoration: underline;" href="'.$whmcs_url['admin_url'].'/systemmodulelog.php">Utilitários > Logs > Log de Módulo</a>. Para funcionar, antes é necessário ativar o debug de módulo clicando em "Ativar Log de Debug". <a target="_blank" style="text-decoration: underline; color: red;" href="'.$whmcs_url['admin_url'].'/systemmodulelog.php">VER LOG</a>.',
     			),
     			// minimum amount
     			'minimunamount' => array(
     				'FriendlyName' => $opt_num++.'- Valor mínimo',
     				'Type' => 'text',
     				'Size' => '10',
-    				'Default' => '5',
+    				'Default' => '0.01',
     				'Description' => 'Insira o valor total mínimo da fatura para permitir pagamento via Pix. Formato: Decimal, separado por ponto. Não deve ser menor que o valor da tarifa aplicada à sua conta efi.',
     			),
 				'fee' => array(
@@ -285,20 +285,12 @@ if(!function_exists('gofasefipix_config')){
 					'Size' => '10',
 					'Description'    => '<span class="gefic_optional_txt">(Opcional)</span> Insira o valor percentual da comissão paga à Efí a cada transação via Pix com pagamento confirmado. Essa informação servirá para calcular e preencher o campo "Taxas" (fee) da lista de transações do WHMCS, já que a API Efí  não retorna essa informação. Use ponto(.) para separar casas decimais, ex.: 1.5',
 				),
-    			// Dias + vencimento
-    			'diasparavencimento' => array(
-            	    'FriendlyName'      => $opt_num++.'- Dias até o vencimento',
-            	    'Type'              => 'text',
-    				'Size'				=> '10',
-    				'Default' 			=> '2',
-            	    'Description'       => 'Dias entre a data de emissão e a data do vencimento do qrcode quando gerado no dia do vencimento ou após o vencimento da fatura. Pix gerado antes do vencimento da fatura é emitido com a mesma data de vencimento da fatura. Mínimo 1 máximo 30.',
-            	),
     			// Top billet button message 
     			'message' => array(
     				'FriendlyName' => $opt_num++.'- Mensagem na fatura',
     				'Type' => 'text',
     				'Size' => '50',
-    				'Default' => 'QR Code gerado com sucesso.<br>Escaneie ou copie e cole o QR code.\n\n',
+    				'Default' => 'Escaneie ou copie e cole o código:',
     				'Description' => 'Texto exibido na fatura acima do botão "Vizualizar Pix"',
     			),
     			
@@ -372,7 +364,7 @@ if(!function_exists('gofasefipix_link')){
     			
 				$GetInvoiceResults			= localAPI('getinvoice',array('invoiceid'=>$params['invoiceid'] ), (int)gefip_setup_admin()['id'] );
     			
-    			if($saved_qrcode['qrcode'] and (float)$saved_qrcode['amount'] === (float)$params['amount']){
+    			if($saved_qrcode['qrcode'] and (float)$saved_qrcode['amount'] === (float)$params['amount'] and strtotime("now -1 hour") < strtotime($saved_qrcode['updated_at']) ){
     				$charge_verify = gefip_charge_verify($saved_qrcode['txid']);
     				$log['charge_verify'] = $charge_verify;
     				if((string)$charge['result']['status'] === (string)'CONCLUIDA'){
@@ -1057,7 +1049,7 @@ if(!function_exists('gefip_verify_module_updates')){
 		$module_version_int = (int)preg_replace("/[^0-9]/", "", $module_version);
 		$available_version_int = (int)preg_replace("/[^0-9]/", "", $available_version);
 		if( $available_version_int === $module_version_int ){
-			$message = '<p style="color: green"><i class="fas fa-check-square"></i> Você está executando a versão mais recente do módulo.</p>';
+			$message = '<p style="color: green"><i class="fas fa-check-square"></i> Você está executando a versão mais recente desse módulo</p>';
             $message .= '<p>Última verificação '.date('d/m/Y à\s H:i', strtotime($updated_at)).' - <a style="text-decoration:underline;" href="'.gefip_whmcs_url('admin_url').'/configgateways.php?manage=gofasefipix&resetversion=gofasefipix#m_gofasefipix">verificar agora</a>.</p>';
 		}
 		if( $available_version_int > $module_version_int ){
@@ -1065,7 +1057,7 @@ if(!function_exists('gefip_verify_module_updates')){
             $message .= '<p>Última verificação '.date('d/m/Y à\s H:i', strtotime($updated_at)).' - <a style="text-decoration:underline;" href="'.gefip_whmcs_url('admin_url').'/configgateways.php?manage=gofasefipix&resetversion=gofasefipix#m_gofasefipix">verificar agora</a>.</p>'; #9
 		}
 		if( $available_version_int < $module_version_int ){
-			$message = '<p style="font-size: 14px; color: orange;"><i class="fas fa-exclamation-triangle"></i> Você está executando uma versão Beta desse módulo.<br>Baixar versão estável: <a style="color:#CC0000;text-decoration:underline;" href="https://gofas.net/?p='.$page_id.'" target="_blank">v'.$available_version.'</a>. Última verificação '.date('d/m/Y H:i', strtotime($updated_at)).'.';
+			$message = '<p style="font-size: 14px; color: orange;"><i class="fas fa-exclamation-triangle"></i> Você está executando uma versão Beta desse módulo<br>Baixar versão estável: <a style="color:#CC0000;text-decoration:underline;" href="https://gofas.net/?p='.$page_id.'" target="_blank">v'.$available_version.'</a>. Última verificação '.date('d/m/Y H:i', strtotime($updated_at)).'.';
             $message .= '<p>Última verificação '.date('d/m/Y à\s H:i', strtotime($updated_at)).' - <a style="text-decoration:underline;" href="'.gefip_whmcs_url('admin_url').'/configgateways.php?manage=gofasefipix&resetversion=gofasefipix#m_gofasefipix">verificar agora</a>.</p>'; #9
         }
 		return [
@@ -1120,48 +1112,7 @@ if(!function_exists('gefip_get_protected_property')){
 	    return $reflection->getValue($object);
 	}
 }
-if(!function_exists('gefip_qrcode_mergetags_fields')){
-    function gefip_qrcode_mergetags_fields($vars){
-        $gefip_merge_fields = array();
-	    $gefip_merge_fields['gefip_qrcode_image']	= 'Efí Pix: URL a imagem do QR code';
-		$gefip_merge_fields['gefip_qrcode']			= 'Efí Pix: Pix Copia e Cola';
-        return $gefip_merge_fields;
-    }
-}
-if(!function_exists('gefip_qrcode_mergetags')){
-    function gefip_qrcode_mergetags($vars){
-		if(
-			$vars['messagename'] === 'Invoice Created' ||
-			$vars['messagename'] === 'Invoice Payment Reminder' ||
-			$vars['messagename'] === 'First Invoice Overdue Notice' ||
-			$vars['messagename'] === 'Second Invoice Overdue Notice' ||
-			$vars['messagename'] === 'Third Invoice Overdue Notice'
-		){
-			$params = getGatewayVariables('gofasefipix');
-			$gefip_merge_fields	= array();
-			$invoice			= localAPI( 'GetInvoice', array('invoiceid' => $vars['relid']), (int)gefip_setup_admin()['id']);
-			if( $invoice['total'] > '0.00' and $invoice['paymentmethod'] === 'gofasefipix'){
-				// Saved Billets
-				$qrcode_saved = array();
-				foreach( Capsule::table('gofasefipix')->where('invoice_id','=',$vars['relid'])->get(['qrcode','qrcode_image']) as $key => $value ){
-					$qrcodes_for_invoice[$key]=json_decode(json_encode($value), true);
-				}
-				$qrcode_saved = $qrcodes_for_invoice['0']; // Array
-				// Merge Fields
-				if (!array_key_exists('gefip_qrcode', $vars['mergefields'])) {
-					$gefip_merge_fields['gefip_qrcode'] = $qrcode_saved['qrcode'];
-				}
-				if (!array_key_exists('gefip_qrcode_image', $vars['mergefields'])) {
-					$gefip_merge_fields['gefip_qrcode_image'] = $qrcode_saved['qrcode_image'];
-				}
-			}
-    	}
-		if($params['log']){
-			logModuleCall('gofasefipix','email_qrcode',$vars,'',$invoice);
-		}
-		return $gefip_merge_fields;
-    }
-}
+
 if(!function_exists('gefip_fee')){
     function gefip_fee($amount){
 		$params = getGatewayVariables('gofasefipix');
@@ -1210,5 +1161,3 @@ if($_POST['id']){
 		logModuleCall('gofasefipix','post_1',array('request'=>$_POST),'', array( 'charge'=>$charge ) );
 	}
 }
-add_hook("EmailPreSend",1,"gefip_qrcode_mergetags");
-add_hook("EmailTplMergeFields",1,"gefip_qrcode_mergetags_fields");
