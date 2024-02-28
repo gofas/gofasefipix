@@ -1,20 +1,12 @@
 # Changelog
 
-## [Unreleased](https://github.com/mauriciogofas/gofasiugupix/tree/HEAD)
+## [Unreleased](https://github.com/mauriciogofas/gofasefipix/tree/HEAD)
 
-[Full Changelog](https://github.com/mauriciogofas/gofasiugupix/compare/v1.0.0...HEAD)
+[Full Changelog](https://github.com/mauriciogofas/gofasefipix/compare/bd82bf4dcc36d732e916f7a2f33770126caca564...HEAD)
 
 **Fixed bugs:**
 
-- Adaptação para php 7 \(evita erro ao resetar a senha\) [\#3](https://github.com/mauriciogofas/gofasiugupix/issues/3)
-
-## [v1.0.0](https://github.com/mauriciogofas/gofasiugupix/tree/v1.0.0) (13/06/2023)
-
-[Full Changelog](https://github.com/mauriciogofas/gofasiugupix/compare/65dbb516264ca46a652e45a7721649ec6a5a3259...v1.0.0)
-
-**Implemented enhancements:**
-
-- Lançamento 🎉 [\#2](https://github.com/mauriciogofas/gofasiugupix/issues/2)
+- Gera novo QR code após uma hora da última emissão [\#1](https://github.com/mauriciogofas/gofasefipix/issues/1)
 
 
 
