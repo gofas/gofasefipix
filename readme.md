@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased](https://github.com/mauriciogofas/gofasefipix/tree/HEAD)
+
+[Full Changelog](https://github.com/mauriciogofas/gofasefipix/compare/v1.0.0...HEAD)
+
+**Fixed bugs:**
+
+- Reduz a descrição para no máximo 140 caracteres [\#2](https://github.com/mauriciogofas/gofasefipix/issues/2)
+
 ## [v1.0.0](https://github.com/mauriciogofas/gofasefipix/tree/v1.0.0) (28/02/2024)
 
 [Full Changelog](https://github.com/mauriciogofas/gofasefipix/compare/bd82bf4dcc36d732e916f7a2f33770126caca564...v1.0.0)
