@@ -1,13 +1,13 @@
 {
   "schema": "1.0",
   "type": "whmcs-gateways",
-  "name": "gofasefiboleto",
+  "name": "gofasefipix",
   "license": "proprietary",
   "category": "payments",
   "description": {
-    "name": "Gofas Efí Boleto",
-    "tagline": "Qr code Boleto e pagamentos instantâneos nas faturas do WHMCS",
-    "long": "Receba instantaneamente as cobranças do WHMCS por Boleto diretamente na sua conta Efí Bank.",
+    "name": "Gofas Efí Pix",
+    "tagline": "Qr code Pix e pagamentos instantâneos nas faturas do WHMCS",
+    "long": "Receba instantaneamente as cobranças do WHMCS por Pix diretamente na sua conta Efí Bank.",
     "features": [
       "Confirmação automática em tempo real",
       "QR code diretamente na fatura do WHMCS",
@@ -15,7 +15,7 @@
       "Tarifa especial para usuários do módulo",
       "Mensagem personalizada na fatura",
       "Reemissão automática de QR code expirado ",
-      "Chave Boleto definida pelo administrador do WHMCS",
+      "Chave Pix definida pelo administrador do WHMCS",
       "Instalação fácil e configuração intuitiva",
       "E muito mais."
     ]
@@ -24,9 +24,9 @@
     "filename": "whmcs.png"
   },
   "support": {
-    "homepage": "https:\/\/gofas.net\/gefib",
+    "homepage": "https:\/\/gofas.net\/gefip",
     "support_url": "https:\/\/gofas.net\/?p=15917",
-    "docs_url": "https:\/\/gofas.net\/gefib"
+    "docs_url": "https:\/\/gofas.net\/gefip"
   },
   "authors": [
     {
