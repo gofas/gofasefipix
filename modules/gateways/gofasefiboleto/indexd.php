@@ -1,11 +1,11 @@
 <?php
 /**
- * Módulo Efí Pix para WHMCS
+ * Módulo Efí Boleto para WHMCS
  * @copyright	2023 Gofas Software
- * @see			https://gofas.net/?p=15590
+ * @see			https://gofas.net/?p=7893
  * @license		https://gofas.net/?p=9340
- * @support		https://gofas.net/?p=14299
- * @version		1.0.0
+ * @support		https://gofas.net/?p=7856
+ * @version		4.0.0
  */
 
 require_once __DIR__ . '/../../../init.php';
@@ -14,13 +14,13 @@ require_once __DIR__ . '/../../../includes/invoicefunctions.php';
 use WHMCS\Database\Capsule;
 use WHMCS\Aplication;
 
-if(!function_exists('gefip_whmcs_url')){
-	function gefip_whmcs_url($type='all'){
+if(!function_exists('gefib_whmcs_url')){
+	function gefib_whmcs_url($type='all'){
         $info=[];
         $self = App::self();
-		$info['root_dir'] = '/'.gefip_get_string_between(gefip_get_protected_property(gefip_get_protected_property(gefip_get_protected_property(gefip_get_protected_property($self, 'clientTemplate'), 'config'),'configFile'),'path'),'/','/templates/');
+		$info['root_dir'] = '/'.gefib_get_string_between(gefib_get_protected_property(gefib_get_protected_property(gefib_get_protected_property(gefib_get_protected_property($self, 'clientTemplate'), 'config'),'configFile'),'path'),'/','/templates/');
 		$info['whmcs_url'] = App::getSystemUrl();
-		$info['admin_path'] = gefip_get_protected_property($self, 'customadminpath');
+		$info['admin_path'] = gefib_get_protected_property($self, 'customadminpath');
         $info['admin_url'] = $info['whmcs_url'].$info['admin_path'];
 		if((string)$type===(string)'all'){
 			return $info;
@@ -28,9 +28,9 @@ if(!function_exists('gefip_whmcs_url')){
         return $info[$type];
 	}
 }
-if(!function_exists('gefip_api_connect')){
-	function gefip_api_connect(){
-		$params = getGatewayVariables('gofasefipix');
+if(!function_exists('gefib_api_connect')){
+	function gefib_api_connect(){
+		$params = getGatewayVariables('gofasefiboleto');
 		if($params['sandbox']){
 			$params_api = [
 				'api_mode' => 'sandbox',
@@ -55,11 +55,11 @@ if(!function_exists('gefip_api_connect')){
 	}
 }
 
-if(!function_exists('gefip_verify_install')){
-	function gefip_verify_install(){
-		if(!Capsule::schema()->hasTable('gofasefipix') ){
+if(!function_exists('gefib_verify_install')){
+	function gefib_verify_install(){
+		if(!Capsule::schema()->hasTable('gofasefiboleto') ){
 			try {
-				Capsule::schema()->create('gofasefipix', function($table){
+				Capsule::schema()->create('gofasefiboleto', function($table){
 					$table->string('invoice_id');
 					$table->string('id');
 					$table->string('txid');
@@ -83,8 +83,8 @@ if(!function_exists('gefip_verify_install')){
 		}
 	}
 }
-if(!function_exists('gefip_get_embed')){
-	function gefip_get_embed($page_id,$referer,$module_version){
+if(!function_exists('gefib_get_embed')){
+	function gefib_get_embed($page_id,$referer,$module_version){
 		$query = 'https://gofas.net/cliente/gofas/updates/?embed='.$page_id.'&referer='.$referer.'&version='.$module_version;
 		$curl = curl_init();
 		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST,0);
@@ -97,24 +97,24 @@ if(!function_exists('gefip_get_embed')){
 		return ['embed'=>$embed,'http_code'=>$http_status];
 	}
 }
-if(!function_exists('gefip_encrypt')){
-	function gefip_encrypt($q) {
+if(!function_exists('gefib_encrypt')){
+	function gefib_encrypt($q) {
 	    $encryptionMethod = "AES-256-CBC";
 		$secretHash = "535ba9979bc6c7ff151f2136cd13b0f9";
 	    return openssl_encrypt($q, $encryptionMethod, $secretHash);
 	}
 }
-if(!function_exists('gefip_decrypt')){
-	function gefip_decrypt($q){
+if(!function_exists('gefib_decrypt')){
+	function gefib_decrypt($q){
 		$encryptionMethod = "AES-256-CBC";
 		$secretHash = "535ba9979bc6c7ff151f2136cd13b0f9";
 	    return openssl_decrypt($q, $encryptionMethod, $secretHash);
 	}
 }
-if(!function_exists('gefip_get_version')){
-	function gefip_get_version($page_id,$referer,$module_version){
-		$current_admin = gefip_current_admin();
-		$query = '?software_id='.$page_id.'&install_url='.$referer.'&current_version='.$module_version.'&installer_email='.$current_admin['email'].'&installer_firstname='.$current_admin['firstname'].'&installer_lastname='.$current_admin['lastname'].'&action=verify'.gefip_sysinfo();
+if(!function_exists('gefib_get_version')){
+	function gefib_get_version($page_id,$referer,$module_version){
+		$current_admin = gefib_current_admin();
+		$query = '?software_id='.$page_id.'&install_url='.$referer.'&current_version='.$module_version.'&installer_email='.$current_admin['email'].'&installer_firstname='.$current_admin['firstname'].'&installer_lastname='.$current_admin['lastname'].'&action=verify'.gefib_sysinfo();
 		$curl = curl_init();
 		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST,0);
 		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER,0);
@@ -126,19 +126,19 @@ if(!function_exists('gefip_get_version')){
 		return ['version'=>$available_version_,'http_code'=>$http_status];
 	}
 }
-if(!function_exists('gofasefipix_config')){
-    function gofasefipix_config(){
-		$gefip_config = [];
+if(!function_exists('gofasefiboleto_config')){
+    function gofasefiboleto_config(){
+		$gefib_config = [];
     	if(stripos($_SERVER['REQUEST_URI'], 'configgateways')!==false){
-    		$module_version	= '1.0.0';
-    		$module_page	= '15590';
-            $verify_install = gefip_verify_install();
-    		$whmcs_url = gefip_whmcs_url();
-    		$check_updates = gefip_verify_module_updates($module_page,$whmcs_url['admin_url'],$module_version);
-    		if($_REQUEST['resetversion'] === 'gofasefipix'){
-                gefip_reset_local_version();
+    		$module_version	= '4.0.0';
+    		$module_page	= '7893';
+            $verify_install = gefib_verify_install();
+    		$whmcs_url = gefib_whmcs_url();
+    		$check_updates = gefib_verify_module_updates($module_page,$whmcs_url['admin_url'],$module_version);
+    		if($_REQUEST['resetversion'] === 'gofasefiboleto'){
+                gefib_reset_local_version();
                 header_remove();
-    			header("Location: ".$whmcs_url['admin_url'].'/configgateways.php?manage=gofasefipix#m_gofasefipix',true,303);
+    			header("Location: ".$whmcs_url['admin_url'].'/configgateways.php?manage=gofasefiboleto#m_gofasefiboleto',true,303);
     			exit;
             }
     		foreach( Capsule::table('tblconfiguration')
@@ -146,29 +146,29 @@ if(!function_exists('gofasefipix_config')){
     		->get(['value']) as $data1 ){
     			$Version = $data1->value;
     		}
-    		$whmcs_version=(int)preg_replace('/[^\da-z]/i', '',  gefip_get_string_between('#'.$Version, '#', '-'));
+    		$whmcs_version=(int)preg_replace('/[^\da-z]/i', '',  gefib_get_string_between('#'.$Version, '#', '-'));
     		if($whmcs_version<861){
     			return [
     				'FriendlyName' => [
     					'Type' => 'System',
-    					'Value' => 'Gofas Efí - Pix',
+    					'Value' => 'Gofas Efí Boleto',
     				],
     				'separator_1' => [
     					'Description' => '
     					<div>
     						<div style="float: right; padding: 0px;">
-    						'.gefip_decrypt($check_updates['check']).'
+    						'.gefib_decrypt($check_updates['check']).'
     						</div>
     						<div>
-    							<h4 style="padding-top: 5px; color: red;">Módulo Gofas Efí - Pix para WHMCS v'.$module_version.' | requer WHMCS versão 8.6.1 ou superior</h4>
+    							<h4 style="padding-top: 5px; color: red;">Módulo Gofas Efí Boleto para WHMCS v'.$module_version.' | requer WHMCS versão 8.6.1 ou superior</h4>
     							'.$check_updates['message'].'
-    							<p><a style="text-decoration:underline;" target="_blank" href="https://gofas.net/?p=15590#configuration">Documentação do módulo</a> | <a style="text-decoration:underline;" target="_blank" href="https://dev.efi.com/reference/metadados/">Documentação da API efi</a></p>
+    							<p><a style="text-decoration:underline;" target="_blank" href="https://gofas.net/?p=7893#configuration">Documentação do módulo</a> | <a style="text-decoration:underline;" target="_blank" href="https://dev.efi.com/reference/metadados/">Documentação da API efi</a></p>
 								
 							</div>
     					</div>',
     				],
     				'footer' => [
-    					'Description' => '<div class="gefip_section">
+    					'Description' => '<div class="gefib_section">
     					<p>&copy; '.date('Y').' <a style="text-decoration:underline;" target="_blank" title="↗ Gofas.net" href="https://gofas.net">Gofas.net</a> | <a style="text-decoration:underline;" target="_blank" title="↗ Gofas.net" href="https://gofas.net/?p='.$module_page.'#changelog">'.$module_version.'</a> | <a  style="text-decoration:underline;"target="_blank" title="↗ Documentação" href="https://gofas.net/?p='.$module_page.'">Documentação</a> | <a style="text-decoration:underline;" target="_blank" title="↗ Fórum de Suporte" href="https://gofas.net/foruns/">Suporte</a>.</p>
     					<p style="font-size: 11px;">
     					Ao utilizar esse módulo você concorda com nosso <a style="text-decoration:underline;" target="_blank" title="↗ Contrato de licença de uso de software" href="https://gofas.net/?p=9340">contrato de licença de uso de software</a>.
@@ -182,76 +182,76 @@ if(!function_exists('gofasefipix_config')){
     		$renderize = array(
     			'FriendlyName' => array(
     				'Type' => 'System',
-    				'Value' => 'Gofas Efí - Pix',
+    				'Value' => 'Gofas Efí Boleto',
     			),
     			'separator_1' => array(
     				'Description' => '
     				<div>
     					<div style="float: right; padding: 0px;">
-    					'.gefip_decrypt($check_updates['check']).'
+    					'.gefib_decrypt($check_updates['check']).'
     					</div>
     					<div>
-    						<h4 style="padding-top: 5px;">Módulo Gofas Efí - Pix para WHMCS v'.$module_version.'</h4>
+    						<h4 style="padding-top: 5px;">Módulo Gofas Efí Boleto para WHMCS v'.$module_version.'</h4>
     						'.$check_updates['message'].'
-    						<p><a style="text-decoration:underline;" target="_blank" href="https://gofas.net/?p=15590#configuration">Documentação do módulo</a> | <a style="text-decoration:underline;" target="_blank" href="https://dev.efi.com/reference/metadados/">Documentação da API efi</a></p>
+    						<p><a style="text-decoration:underline;" target="_blank" href="https://gofas.net/?p=7893#configuration">Documentação do módulo</a> | <a style="text-decoration:underline;" target="_blank" href="https://dev.efi.com/reference/metadados/">Documentação da API efi</a></p>
     					</div>
     				</div>',
     			),
     		// Client ID
 			'clientid' => array(
-				'FriendlyName' => $opt_num++.'- Chave Client ID Produção<span class="gefip_required">*</span>',
+				'FriendlyName' => $opt_num++.'- Chave Client ID Produção<span class="gefib_required">*</span>',
 				'Type' => 'text',
 				'Size' => '40',
 				'Default' => '',
-				'Description' => '<span class="gefip_required_txt">(Obrigatório)</span>',
+				'Description' => '<span class="gefib_required_txt">(Obrigatório)</span>',
 			),
 			// Client Secret
 			'clientsecret' => array(
-				'FriendlyName' => $opt_num++.'- Chave Client Secret Produção<span class="gefip_required">*</span>',
+				'FriendlyName' => $opt_num++.'- Chave Client Secret Produção<span class="gefib_required">*</span>',
 				'Type' => 'text',
 				'Size' => '40',
 				'Default' => '',
-				'Description' => '<span class="gefip_required_txt">(Obrigatório)</span>',
+				'Description' => '<span class="gefib_required_txt">(Obrigatório)</span>',
 			),
 			// Certificate
 			'certificate' => array(
-				'FriendlyName' => $opt_num++.'- Certificado Produção<span class="gefip_required">*</span>',
+				'FriendlyName' => $opt_num++.'- Certificado Produção<span class="gefib_required">*</span>',
 				'Type' => 'text',
 				'Size' => '40',
 				'Default' => '',
-				'Description' => '<span class="gefip_required_txt">(Obrigatório)</span>. Caminho completo e nome do arquivo, exemplo: /var/www/site.com.br/certificado.pem',
+				'Description' => '<span class="gefib_required_txt">(Obrigatório)</span>. Caminho completo e nome do arquivo, exemplo: /var/www/site.com.br/certificado.pem',
 			),
 			// Client ID Sandbox
 			'clientidsandbox' => array(
-				'FriendlyName' => $opt_num++.'- Chave Client ID Desenvolvimento<span class="gefip_required">*</span>',
+				'FriendlyName' => $opt_num++.'- Chave Client ID Desenvolvimento<span class="gefib_required">*</span>',
 				'Type' => 'text',
 				'Size' => '40',
 				'Default' => '',
-				'Description' => '<span class="gefip_required_txt">(Obrigatório)</span>',
+				'Description' => '<span class="gefib_required_txt">(Obrigatório)</span>',
 			),
 			// Client Secret Sandbox
 			'clientsecretsandbox' => array(
-				'FriendlyName' => $opt_num++.'- Chave Client Secret Desenvolvimento<span class="gefip_required">*</span>',
+				'FriendlyName' => $opt_num++.'- Chave Client Secret Desenvolvimento<span class="gefib_required">*</span>',
 				'Type' => 'text',
 				'Size' => '40',
 				'Default' => '',
-				'Description' => '<span class="gefip_required_txt">(Obrigatório)</span>',
+				'Description' => '<span class="gefib_required_txt">(Obrigatório)</span>',
 			),
 			// Certificate
 			'certificatesandbox' => array(
-				'FriendlyName' => $opt_num++.'- Certificado Homologação<span class="gefip_required">*</span>',
+				'FriendlyName' => $opt_num++.'- Certificado Homologação<span class="gefib_required">*</span>',
 				'Type' => 'text',
 				'Size' => '40',
 				'Default' => '',
-				'Description' => '<span class="gefip_required_txt">(Obrigatório)</span>. Caminho completo e nome do arquivo, exemplo: /var/www/site.com.br/certificado.pem',
+				'Description' => '<span class="gefib_required_txt">(Obrigatório)</span>. Caminho completo e nome do arquivo, exemplo: /var/www/site.com.br/certificado.pem',
 			),
-			// Chave Pix
+			// Chave Boleto
 			'pixkey' => array(
-				'FriendlyName' => $opt_num++.'- Chave Pix<span class="gefip_required">*</span>',
+				'FriendlyName' => $opt_num++.'- Chave Boleto<span class="gefib_required">*</span>',
 				'Type' => 'text',
 				'Size' => '40',
 				'Default' => '',
-				'Description' => '<span class="gefip_required_txt">(Obrigatório)</span>.Chave Pix aleatória registrada na sua conta Efí (<a target="_blank" style="text-decoration: underline;" href="https://app.sejaefi.com.br/pix/minhas-chaves">gerenciar chaves</a>)',
+				'Description' => '<span class="gefib_required_txt">(Obrigatório)</span>.Chave Boleto aleatória registrada na sua conta Efí (<a target="_blank" style="text-decoration: underline;" href="https://app.sejaefi.com.br/pix/minhas-chaves">gerenciar chaves</a>)',
 			),
     			'separator_2' => array(
     				'Description' => '<span><a target="_blank" style="text-decoration:underline;" href="https://dev.efi.com/reference/autentica%C3%A7%C3%A3o#criando-suas-chaves-de-api-api-tokens-via-painel">Veja aqui como criar suas chaves de API (API Tokens) via painel Efí</a></span>',
@@ -276,14 +276,14 @@ if(!function_exists('gofasefipix_config')){
     				'Type' => 'text',
     				'Size' => '10',
     				'Default' => '0.01',
-    				'Description' => 'Insira o valor total mínimo da fatura para permitir pagamento via Pix. Formato: Decimal, separado por ponto. Não deve ser menor que o valor da tarifa aplicada à sua conta efi.',
+    				'Description' => 'Insira o valor total mínimo da fatura para permitir pagamento via Boleto. Formato: Decimal, separado por ponto. Não deve ser menor que o valor da tarifa aplicada à sua conta efi.',
     			),
 				'fee' => array(
 					'FriendlyName' => $opt_num++.'- Valor da tarifa Efí',
 					'Type' => 'text',
 					'Default' => '0.99',
 					'Size' => '10',
-					'Description'    => '<span class="gefic_optional_txt">(Opcional)</span> Insira o valor percentual da comissão paga à Efí a cada transação via Pix com pagamento confirmado. Essa informação servirá para calcular e preencher o campo "Taxas" (fee) da lista de transações do WHMCS, já que a API Efí  não retorna essa informação. Use ponto(.) para separar casas decimais, ex.: 1.5',
+					'Description'    => '<span class="gefic_optional_txt">(Opcional)</span> Insira o valor percentual da comissão paga à Efí a cada transação via Boleto com pagamento confirmado. Essa informação servirá para calcular e preencher o campo "Taxas" (fee) da lista de transações do WHMCS, já que a API Efí  não retorna essa informação. Use ponto(.) para separar casas decimais, ex.: 1.5',
 				),
     			// Top billet button message 
     			'message' => array(
@@ -291,12 +291,12 @@ if(!function_exists('gofasefipix_config')){
     				'Type' => 'text',
     				'Size' => '50',
     				'Default' => 'Escaneie ou copie e cole o código:',
-    				'Description' => 'Texto exibido na fatura acima do botão "Vizualizar Pix"',
+    				'Description' => 'Texto exibido na fatura acima do botão "Vizualizar Boleto"',
     			),
     			
     		);
     		$footer = array('footer' => array(
-    				'Description' => '<div class="gefip_section">
+    				'Description' => '<div class="gefib_section">
     				<p>&copy; '.date('Y').' <a style="text-decoration:underline;" target="_blank" title="↗ Gofas.net" href="https://gofas.net">Gofas.net</a> | <a style="text-decoration:underline;" target="_blank" title="↗ Gofas.net" href="https://gofas.net/?p='.$module_page.'#changelog">'.$module_version.'</a> | <a  style="text-decoration:underline;"target="_blank" title="↗ Documentação" href="https://gofas.net/?p='.$module_page.'">Documentação</a> | <a style="text-decoration:underline;" target="_blank" title="↗ Fórum de Suporte" href="https://gofas.net/foruns/">Suporte</a>.</p>
     				<p style="font-size: 12px;">
     				Ao utilizar esse módulo você concorda com nosso <a style="text-decoration:underline;" target="_blank" title="↗ Contrato de licença de uso de software" href="https://gofas.net/?p=9340">contrato de licença de uso de software</a>.
@@ -305,16 +305,16 @@ if(!function_exists('gofasefipix_config')){
     				</div>',
     			),
     		);
-			$gefip_config = array_merge($renderize,$footer);
+			$gefib_config = array_merge($renderize,$footer);
 		}
-    	return $gefip_config;
+    	return $gefib_config;
     }
 }
-if(!function_exists('gofasefipix_link')){
-    function gofasefipix_link($params){
+if(!function_exists('gofasefiboleto_link')){
+    function gofasefiboleto_link($params){
 		if(stripos($_SERVER['REQUEST_URI'], 'viewinvoice') !== false ){
-			$gefip_webhook = gefip_webhook();
-			$log['webhook'] = $gefip_webhook;
+			$gefib_webhook = gefib_webhook();
+			$log['webhook'] = $gefib_webhook;
 		}
     	if(stripos($_SERVER['REQUEST_URI'], 'viewinvoice') !== false ){
     		$log['params'] = $params;
@@ -330,18 +330,18 @@ if(!function_exists('gofasefipix_link')){
     			  }
     			  function outFunc() {
     				var tooltip = document.getElementById("copy_tooltip");
-    				//tooltip.innerHTML = "Pix Copia e Cola";
-    				setTimeout(function(){ tooltip.innerHTML = "Pix Copia e Cola"; }, 1000);
+    				//tooltip.innerHTML = "Boleto Copia e Cola";
+    				setTimeout(function(){ tooltip.innerHTML = "Boleto Copia e Cola"; }, 1000);
     			  }
     			</script>';
-    			$result .= '<input type="hidden" id="system_url" value="'.gefip_whmcs_url('whmcs_url').'">';
+    			$result .= '<input type="hidden" id="system_url" value="'.gefib_whmcs_url('whmcs_url').'">';
     			$result .= '<input type="hidden" id="invoice_id" value="'.$params['invoiceid'].'">';
-				//$result .= '<script type="text/javascript" src="'.gefip_whmcs_url('whmcs_url').'/modules/gateways/gofasefipix/scripts.js" charset="UTF-8"></script>';
+				//$result .= '<script type="text/javascript" src="'.gefib_whmcs_url('whmcs_url').'/modules/gateways/gofasefiboleto/scripts.js" charset="UTF-8"></script>';
 				$result .= '<script>
 				$(document).ready(function () {
 					var system_url = $("#system_url").val();
 					var invoice_id = $("#invoice_id").val();
-					var get_url = "modules/gateways/gofasefipix.php";
+					var get_url = "modules/gateways/gofasefiboleto.php";
 					setInterval(function () {
 						$.get(
 							system_url + get_url,
@@ -356,36 +356,36 @@ if(!function_exists('gofasefipix_link')){
 				});
 				
 				</script>';
-    			$params_api = gefip_api_connect();
+    			$params_api = gefib_api_connect();
 				
-    			$customer = gefip_customer($params['clientdetails']['id']);
+    			$customer = gefib_customer($params['clientdetails']['id']);
     			$log['customer'] = $customer;
-    			$saved_qrcode = gefip_get_local_qrc($params['invoiceid']);
+    			$saved_qrcode = gefib_get_local_qrc($params['invoiceid']);
     			
-				$GetInvoiceResults			= localAPI('getinvoice',array('invoiceid'=>$params['invoiceid'] ), (int)gefip_setup_admin()['id'] );
+				$GetInvoiceResults			= localAPI('getinvoice',array('invoiceid'=>$params['invoiceid'] ), (int)gefib_setup_admin()['id'] );
     			
     			if($saved_qrcode['qrcode'] and (float)$saved_qrcode['amount'] === (float)$params['amount'] and strtotime("now -1 hour") < strtotime($saved_qrcode['updated_at']) ){
-    				$charge_verify = gefip_charge_verify($saved_qrcode['txid']);
+    				$charge_verify = gefib_charge_verify($saved_qrcode['txid']);
     				$log['charge_verify'] = $charge_verify;
     				if((string)$charge['result']['status'] === (string)'CONCLUIDA'){
-    					$add_trans = gefip_add_trans($params['clientdetails']['id'],$params['invoiceid'], (float)$charge['result']['valor']['original'], gefip_fee($charge['result']['valor']['original']), 'gefip-'.$params_api['api_mode'].'-'.$qrcode['txid'], 'Pix pago - confirmação ao acessar a fatura');
+    					$add_trans = gefib_add_trans($params['clientdetails']['id'],$params['invoiceid'], (float)$charge['result']['valor']['original'], gefib_fee($charge['result']['valor']['original']), 'gefib-'.$params_api['api_mode'].'-'.$qrcode['txid'], 'Boleto pago - confirmação ao acessar a fatura');
 						header_remove();
-    					header("Location: ".gefip_whmcs_url('whmcs_url').'/viewinvoice.php?id='.$params['invoiceid'],true,303);
+    					header("Location: ".gefib_whmcs_url('whmcs_url').'/viewinvoice.php?id='.$params['invoiceid'],true,303);
     					exit;
     				}
     				$result .= $params['message'];
 					$result .= '<img style="width: 200px;border: 1px solid #ccc;" src="'.$saved_qrcode['qrcode_image'].'">';
     				$result .= '<input value="'.$saved_qrcode['qrcode'].'" id="qrcodeforcopy" style="width: 0px;height: 0px;font-size: 0px;padding: 0px;display:none;">';
-    				$result .= '<button style="position: relative;font-size: 14px; display: inline-block;width: 200px;"  id="copy_tooltip" class="btn btn-default" onclick="copy_tooltip()" onmouseout="outFunc()">Pix Copia e Cola</button>';
+    				$result .= '<button style="position: relative;font-size: 14px; display: inline-block;width: 200px;"  id="copy_tooltip" class="btn btn-default" onclick="copy_tooltip()" onmouseout="outFunc()">Boleto Copia e Cola</button>';
     				$log['saved_qrcode'] = $saved_qrcode;
     				if($error){
     					$result = '<b style="color:red;">Erro: '.$error.'</b>';
     				}
     				if($params['log']){
-    					foreach( Capsule::table('tblconfiguration') -> where('setting','=','gefip_version') -> get(['value']) as $gefip_version_ ){
-    						$gefip_version			= $gefip_version_->value;
+    					foreach( Capsule::table('tblconfiguration') -> where('setting','=','gefib_version') -> get(['value']) as $gefib_version_ ){
+    						$gefib_version			= $gefib_version_->value;
     					}
-    					logModuleCall('gofasefipix','gofasefipix_link',array('module_version'=>$gefip_version,'postfields'=>$postfields),'', $log );
+    					logModuleCall('gofasefiboleto','gofasefiboleto_link',array('module_version'=>$gefib_version,'postfields'=>$postfields),'', $log );
     				}
     				if(!$error and $params['redirecttobillet'] and stripos($_SERVER['REQUEST_URI'], 'viewinvoice') ){
     					header_remove();
@@ -414,10 +414,10 @@ if(!function_exists('gofasefipix_link')){
 						  'original'=> number_format($params['amount'], 2,'.',''),
 						],
 						'chave'=> $params['pixkey'],
-						'solicitacaoPagador'=> (string)(substr( implode("\n",$line_items),  0, 250))
+						'solicitacaoPagador'=> (string)(substr( implode("\n",$line_items),  0, 140))
 					];
 					
-    				$qrcode_ = gefip_charge($postfields);
+    				$qrcode_ = gefib_charge($postfields);
 					
     				if((int)$qrcode_['result_code'] !== (int)200){
     					$error .= $qrcode_['result_code'].': ';
@@ -431,7 +431,7 @@ if(!function_exists('gofasefipix_link')){
     				$log['qrcode_'] = $qrcode_;
     				if($qrcode_['result']['qrcode']){
                         if(!$saved_qrcode['qrcode'] || !$saved_qrcode['qrcode_image']){
-    						$save_qrc = gefip_save_qrc(
+    						$save_qrc = gefib_save_qrc(
     							[
     								'invoice_id'=>$params['invoiceid'],
     								'id'=>$qrcode_['result']['id'],
@@ -447,7 +447,7 @@ if(!function_exists('gofasefipix_link')){
     						}
     					}
     					if($saved_qrcode['qrcode']){
-    						$update_qrc = gefip_update_qrc(
+    						$update_qrc = gefib_update_qrc(
     							[
     								'invoice_id'=>$params['invoiceid'],
     								'id'=>$qrcode_['result']['id'],
@@ -458,26 +458,26 @@ if(!function_exists('gofasefipix_link')){
     								'api_mode'=>$params_api['api_mode'],
     							]
     						);
-    						//$update_qrc = gefip_update_qrc($update_qrc);
+    						//$update_qrc = gefib_update_qrc($update_qrc);
     						if($update_qrc !== 'success'){
     							$error .= $update_qrc;
     						}
     					}
     					$result .= $params['message'];
 						$result .= '<img style="width: 200px;border: 1px solid #ccc;" src="'.$qrcode_['result']['imagemQrcode'].'">';
-    					//$result .= '<a target="_blank" class="btn btn-default" style=" float: left;font-size: 14px;" href="'.$qrcode_['result']['pix']['qrcode'].'">Visualizar o Pix</a>';
+    					//$result .= '<a target="_blank" class="btn btn-default" style=" float: left;font-size: 14px;" href="'.$qrcode_['result']['pix']['qrcode'].'">Visualizar o Boleto</a>';
     					$result .= '<input value="'.$qrcode_['result']['qrcode'].'" id="qrcodeforcopy" style="width: 0px;height: 0px;font-size: 0px;padding: 0px;display:none;">';
-    					$result .= '<button style="position: relative;font-size: 14px; display: inline-block;width: 200px;"  id="copy_tooltip" class="btn btn-default" onclick="copy_tooltip()" onmouseout="outFunc()">Pix Copia e Cola</button>';
+    					$result .= '<button style="position: relative;font-size: 14px; display: inline-block;width: 200px;"  id="copy_tooltip" class="btn btn-default" onclick="copy_tooltip()" onmouseout="outFunc()">Boleto Copia e Cola</button>';
     				}
     			}
     			if($error){
     		    	$result = '<b style="color:red;">Erro: '.$error.'</b>';
     			}
     			if($params['log']){
-    				foreach( Capsule::table('tblconfiguration') -> where('setting','=','gefip_version') -> get(['value']) as $gefip_version_ ){
-    					$gefip_version			= $gefip_version_->value;
+    				foreach( Capsule::table('tblconfiguration') -> where('setting','=','gefib_version') -> get(['value']) as $gefib_version_ ){
+    					$gefib_version			= $gefib_version_->value;
     				}
-    				logModuleCall('gofasefipix','gofasefipix_link',array('module_version'=>$gefip_version,'postfields'=>$postfields),'', $log );
+    				logModuleCall('gofasefiboleto','gofasefiboleto_link',array('module_version'=>$gefib_version,'postfields'=>$postfields),'', $log );
     				//echo '<pre style="height:250px;">',$url,'<br>',print_r($log),'</pre>';
     			}
     			if(!$error and $params['redirecttobillet'] and stripos($_SERVER['REQUEST_URI'], 'viewinvoice') ){
@@ -496,9 +496,9 @@ if(!function_exists('gofasefipix_link')){
     	}
     }
 }
-if( !function_exists('gefip_get_token') ){
-	function gefip_get_token(){
-		$params_api = gefip_api_connect();
+if( !function_exists('gefib_get_token') ){
+	function gefib_get_token(){
+		$params_api = gefib_api_connect();
 		$curl = curl_init($params_api['charge_url'].'/oauth/token');
 		$client_id=$params_api['clientid'];
 		$client_secret=$params_api['clientsecret'];
@@ -526,10 +526,10 @@ if( !function_exists('gefip_get_token') ){
 		}
 	}
 }
-if(!function_exists('gefip_charge')){
-	function gefip_charge($postfields){
-		$params_api = gefip_api_connect();
-    	$access_token = gefip_get_token();
+if(!function_exists('gefib_charge')){
+	function gefib_charge($postfields){
+		$params_api = gefib_api_connect();
+    	$access_token = gefib_get_token();
 		$curl = curl_init($params_api['charge_url'].'/v2/cob');
   		curl_setopt($curl, CURLOPT_HTTPHEADER, array(
 			'Authorization: Bearer '.$access_token['access_token'],
@@ -560,10 +560,10 @@ if(!function_exists('gefip_charge')){
 		return ['result_code'=>$result_code,'result'=>$result];
 	}
 }
-if(!function_exists('gefip_charge_verify')){
-	function gefip_charge_verify($id){
-		$params_api = gefip_api_connect();
-		$access_token = gefip_get_token();
+if(!function_exists('gefib_charge_verify')){
+	function gefib_charge_verify($id){
+		$params_api = gefib_api_connect();
+		$access_token = gefib_get_token();
 		$curl = curl_init($params_api['charge_url'].'/v2/cob/'.$id);
   			curl_setopt($curl, CURLOPT_HTTPHEADER, array(
 				'Authorization: Bearer '.$access_token['access_token'],
@@ -577,16 +577,16 @@ if(!function_exists('gefip_charge_verify')){
 		return ['result_code'=>$result_code,'result'=>$result];
 	}
 }
-if(!function_exists('gefip_webhook')){
-	function gefip_webhook(){
-		$params_api = gefip_api_connect();
-		$access_token = gefip_get_token();
-		$params = getGatewayVariables('gofasefipix');
-		foreach( Capsule::table('tblconfiguration')->where('setting','=','gefip_webhook')->get(['value','created_at']) as $webhook_ ){
+if(!function_exists('gefib_webhook')){
+	function gefib_webhook(){
+		$params_api = gefib_api_connect();
+		$access_token = gefib_get_token();
+		$params = getGatewayVariables('gofasefiboleto');
+		foreach( Capsule::table('tblconfiguration')->where('setting','=','gefib_webhook')->get(['value','created_at']) as $webhook_ ){
 			$webhook				= json_decode($webhook_->value, true);
 			$webhook['created_at']	= $webhook_->created_at;
 		}
-		$webhook_url = gefip_whmcs_url('whmcs_url').'modules/gateways/gofasefipix/includes/';
+		$webhook_url = gefib_whmcs_url('whmcs_url').'modules/gateways/gofasefiboleto/includes/';
 		if($webhook['webhook_url'] !== $webhook_url || $webhook['pixkey'] !== $params['pixkey'] || !$webhook['webhook_url'] || !$webhook['pixkey']){
 			$curl = curl_init($params_api['charge_url'].'/v2/webhook/'.$params['pixkey']);
 			curl_setopt($curl, CURLOPT_HTTPHEADER, array(
@@ -605,7 +605,7 @@ if(!function_exists('gefip_webhook')){
 		if((int)$result_code === 200){
 			if(!empty($webhook['webhook_url']) || !empty($webhook['pixkey'])){
 				try {
-					Capsule::table('tblconfiguration')->where('setting','gefip_webhook')->update([
+					Capsule::table('tblconfiguration')->where('setting','gefib_webhook')->update([
 						'value' => json_encode([
 							'webhook_url'=>$webhook_url,
 							'pixkey'=>$params['pixkey'],
@@ -620,7 +620,7 @@ if(!function_exists('gefip_webhook')){
 			}
 			else{
 				try { Capsule::table('tblconfiguration')->insert(array(
-					'setting' => 'gefip_webhook',
+					'setting' => 'gefib_webhook',
 					'value' => json_encode([
 						'webhook_url'=>$webhook_url,
 						'pixkey'=>$params['pixkey'],
@@ -637,8 +637,8 @@ if(!function_exists('gefip_webhook')){
 		return ['webhook_url'=>$webhook_url,'result_code'=>$result_code,'result'=>$result,'error'=>$error];
 	}
 }
-if(!function_exists('gefip_get_string_between')){
-	function gefip_get_string_between($string, $start, $end){
+if(!function_exists('gefib_get_string_between')){
+	function gefib_get_string_between($string, $start, $end){
 		$string = " ".$string;
 		$ini = strpos($string,$start);
 		if ($ini == 0) return "";
@@ -648,35 +648,35 @@ if(!function_exists('gefip_get_string_between')){
 	}
 }
 
-if(!function_exists('gefip_add_trans')){
-	function gefip_add_trans( $user_id, $invoice_id, $amount, $fee, $id, $description ){
-		$params = getGatewayVariables('gofasefipix');
+if(!function_exists('gefib_add_trans')){
+	function gefib_add_trans( $user_id, $invoice_id, $amount, $fee, $id, $description ){
+		$params = getGatewayVariables('gofasefiboleto');
  		$addtransvalues['userid'] = $user_id;
  		$addtransvalues['invoiceid'] = $invoice_id;
  		$addtransvalues['description'] = $description;
  		$addtransvalues['amountin'] = $amount;
  		$addtransvalues['fees'] = $fee;
- 		$addtransvalues['paymentmethod'] = 'gofasefipix';
+ 		$addtransvalues['paymentmethod'] = 'gofasefiboleto';
  		$addtransvalues['transid'] = $id;
  		$addtransvalues['date'] = date('d/m/Y');
-		$addtransresults = localAPI( "addtransaction", $addtransvalues, (int)gefip_setup_admin()['id']);
-		$delete_qrc = Capsule::table('gofasefipix')->where('invoice_id', '=',$invoice_id)->delete();
-		$gefip_update_stats = gefip_update_stats();
+		$addtransresults = localAPI( "addtransaction", $addtransvalues, (int)gefib_setup_admin()['id']);
+		$delete_qrc = Capsule::table('gofasefiboleto')->where('invoice_id', '=',$invoice_id)->delete();
+		$gefib_update_stats = gefib_update_stats();
 		
 		if( $addtransresults['result'] === 'success'){
 			return array('values'=>$addtransvalues, 'result'=>$addtransresults);
 		}
 		elseif($addtransresults['result'] !== 'success'){
 			$error = '<b>Não foi possível gravar a transação.</b>';
-			return array('error'=>$error, 'values'=>$addtransvalues, 'result'=>$addtransresults,'update_stats'=>$gefip_update_stats);
+			return array('error'=>$error, 'values'=>$addtransvalues, 'result'=>$addtransresults,'update_stats'=>$gefib_update_stats);
 		}
 	}
 }
-if(!function_exists('gefip_customer')){
-	function gefip_customer($client_id){
+if(!function_exists('gefib_customer')){
+	function gefib_customer($client_id){
 		//Determine custom fields id
-		$params = getGatewayVariables('gofasefipix');
-		$client = localAPI('GetClientsDetails',array( 'clientid' => $client_id, 'stats' => false, ), (int)gefip_setup_admin()['id']);
+		$params = getGatewayVariables('gofasefiboleto');
+		$client = localAPI('GetClientsDetails',array( 'clientid' => $client_id, 'stats' => false, ), (int)gefib_setup_admin()['id']);
 		foreach( Capsule::table('tblcustomfields')->where('type','=','client')->get() as $customfield ){
 			$customfield_id = $customfield->id;
 			$customfield_name = strtolower($customfield->fieldname);
@@ -834,8 +834,8 @@ if(!function_exists('gefip_customer')){
 		return $customer;
 	}
 }
-if(!function_exists('gefip_save_qrc')){
-	function gefip_save_qrc($qr_code){
+if(!function_exists('gefib_save_qrc')){
+	function gefib_save_qrc($qr_code){
 		$data = array(
 			'invoice_id'=>$qr_code['invoice_id'],
 			'id'=>$qr_code['id'],
@@ -849,52 +849,52 @@ if(!function_exists('gefip_save_qrc')){
 			'updated_at'=>date("Y-m-d H:i:s"),
 		);
 	try {
-		$save_qrc = Capsule::table('gofasefipix')->insert($data);
+		$save_qrc = Capsule::table('gofasefiboleto')->insert($data);
 		return 'success';
 	}
 	catch (\Exception $e){
 		return $e->getMessage();
 	}
 }}
-if(!function_exists('gefip_update_qrc')){
-	function gefip_update_qrc($data){
-		$params = getGatewayVariables('gofasefipix');
-		$local_qrc = gefip_get_local_qrc($data['invoice_id']);
+if(!function_exists('gefib_update_qrc')){
+	function gefib_update_qrc($data){
+		$params = getGatewayVariables('gofasefiboleto');
+		$local_qrc = gefib_get_local_qrc($data['invoice_id']);
 		$data['created_at'] = $local_qrc['created_at'];
 		$data['updated_at']= date("Y-m-d H:i:s");
 		
 	try {
-		$update_qrc = Capsule::table('gofasefipix')->where('invoice_id', '=',$data['invoice_id'])->update($data);
+		$update_qrc = Capsule::table('gofasefiboleto')->where('invoice_id', '=',$data['invoice_id'])->update($data);
 		if($params['log']){
-			logModuleCall('gofasefipix','gefip_update_qrc',array('data'=>$data),'post',array('update_qrc' => $update_qrc),'replaceVars');
+			logModuleCall('gofasefiboleto','gefib_update_qrc',array('data'=>$data),'post',array('update_qrc' => $update_qrc),'replaceVars');
 		}
 		return 'success';
 	}
 	catch (\Exception $e){
 		if($params['log']){
-			logModuleCall('gofasefipix','gefip_update_qrc',array('data'=>$data),'post',array('update_qrc' => $update_qrc),'replaceVars');
+			logModuleCall('gofasefiboleto','gefib_update_qrc',array('data'=>$data),'post',array('update_qrc' => $update_qrc),'replaceVars');
 		}
 		return $e->getMessage();
 	}
 }}
-if(!function_exists('gefip_get_local_qrc')){
-	function gefip_get_local_qrc($invoice_id){
-		$params_api = gefip_api_connect();
-		foreach( Capsule::table('gofasefipix')->where('invoice_id','=', $invoice_id)->where('api_mode','=',$params_api['api_mode'])->get() as $key => $value ){
+if(!function_exists('gefib_get_local_qrc')){
+	function gefib_get_local_qrc($invoice_id){
+		$params_api = gefib_api_connect();
+		foreach( Capsule::table('gofasefiboleto')->where('invoice_id','=', $invoice_id)->where('api_mode','=',$params_api['api_mode'])->get() as $key => $value ){
 			$qrc_for_invoice[$key] = json_decode(json_encode($value), true);
 		}
 		return $qrc_for_invoice['0'];
 	}
 }
-if(!function_exists('gefip_update_stats')){
-	function gefip_update_stats(){
-		$params = getGatewayVariables('gofasefipix');
+if(!function_exists('gefib_update_stats')){
+	function gefib_update_stats(){
+		$params = getGatewayVariables('gofasefiboleto');
 		if($params['sandbox']){
 			return;
 		}
-		$whmcs_url = gefip_whmcs_url();
-		$setup_admin = gefip_setup_admin();
-		$query = '?software_id=15590&install_url='.$whmcs_url['admin_url'].'&current_version='.gefip_get_local_version().'&installer_email='.$setup_admin['email'].'&installer_firstname='.$setup_admin['firstname'].'&installer_lastname='.$setup_admin['lastname'].'&action=charge'.gefip_sysinfo();
+		$whmcs_url = gefib_whmcs_url();
+		$setup_admin = gefib_setup_admin();
+		$query = '?software_id=7893&install_url='.$whmcs_url['admin_url'].'&current_version='.gefib_get_local_version().'&installer_email='.$setup_admin['email'].'&installer_firstname='.$setup_admin['firstname'].'&installer_lastname='.$setup_admin['lastname'].'&action=charge'.gefib_sysinfo();
 		$curl = curl_init();
 		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST,0);
 		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER,0);
@@ -907,26 +907,26 @@ if(!function_exists('gefip_update_stats')){
 		return $return;
 	}
 }
-if(!function_exists('gefip_get_local_version')){
-	function gefip_get_local_version(){
-	foreach( Capsule::table('tblconfiguration')->where('setting','=','gefip_version')->get(['value']) as $version_ ){
+if(!function_exists('gefib_get_local_version')){
+	function gefib_get_local_version(){
+	foreach( Capsule::table('tblconfiguration')->where('setting','=','gefib_version')->get(['value']) as $version_ ){
 		$version		= json_decode($version_->value, true);
 		$local_version			= $version['local_version'];
 	}
 	return $local_version;
 }}
-if(!function_exists('gefip_reset_local_version')){
-	function gefip_reset_local_version(){
+if(!function_exists('gefib_reset_local_version')){
+	function gefib_reset_local_version(){
         try{
-	        Capsule::table('tblconfiguration')->where('setting','=','gefip_version')->delete();
+	        Capsule::table('tblconfiguration')->where('setting','=','gefib_version')->delete();
 	        return 'sucess';
         }
         catch (\Exception $e){
             return $e->getMessage();
         }
 }}
-if(!function_exists('gefip_sysinfo')){
-	function gefip_sysinfo(){
+if(!function_exists('gefib_sysinfo')){
+	function gefib_sysinfo(){
 		foreach( Capsule::table('tblconfiguration')
 		->where('setting','=','Version')
 		->get(['value']) as $data1 ){
@@ -940,9 +940,9 @@ if(!function_exists('gefip_sysinfo')){
 		return '&whmcs_version='.$Version.'&php_version='.$PHPVersion;
 	}
 }
-if(!function_exists('gefip_verify_module_updates')){
-	function gefip_verify_module_updates($page_id,$referer,$module_version){
-		foreach( Capsule::table('tblconfiguration')->where('setting','=','gefip_version')->get(['value','created_at','updated_at']) as $version_ ){
+if(!function_exists('gefib_verify_module_updates')){
+	function gefib_verify_module_updates($page_id,$referer,$module_version){
+		foreach( Capsule::table('tblconfiguration')->where('setting','=','gefib_version')->get(['value','created_at','updated_at']) as $version_ ){
 			$version		= json_decode($version_->value, true);
 			$local_version	= $version['local_version'];
 			$last_version	= $version['last_version'];
@@ -951,8 +951,8 @@ if(!function_exists('gefip_verify_module_updates')){
 			$updated_at		= $version_->updated_at;
 		}
 		if(!$version){
-			$get_version = gefip_get_version($page_id,$referer,$module_version);
-			$get_embed	 = gefip_get_embed($page_id,$referer,$module_version);
+			$get_version = gefib_get_version($page_id,$referer,$module_version);
+			$get_embed	 = gefib_get_embed($page_id,$referer,$module_version);
 			
 			if((int)$get_version['http_code'] !== 200){
 				$error .= $get_version['http_code'].' '.$get_version['version'];
@@ -962,8 +962,8 @@ if(!function_exists('gefip_verify_module_updates')){
 			}
 		}
 		if($version and strtotime($updated_at) < strtotime("-1 day")){
-			$get_version = gefip_get_version($page_id,$referer,$module_version);
-			$get_embed	 = gefip_get_embed($page_id,$referer,$module_version);
+			$get_version = gefib_get_version($page_id,$referer,$module_version);
+			$get_embed	 = gefib_get_embed($page_id,$referer,$module_version);
 			if((int)$get_version['http_code'] !== 200){
 				$error .= $get_version['http_code'].' '.$get_version['version'];
 			}
@@ -972,8 +972,8 @@ if(!function_exists('gefip_verify_module_updates')){
 			}
 		}
 		if($version and (string)$module_version !== (string)$local_version){
-			$get_version = gefip_get_version($page_id,$referer,$module_version);
-			$get_embed	 = gefip_get_embed($page_id,$referer,$module_version);
+			$get_version = gefib_get_version($page_id,$referer,$module_version);
+			$get_embed	 = gefib_get_embed($page_id,$referer,$module_version);
 			if((int)$get_version['http_code'] !== 200){
 				$error .= $get_version['http_code'].' '.$get_version['version'];
 			}
@@ -987,17 +987,17 @@ if(!function_exists('gefip_verify_module_updates')){
 		if(!$version and $get_version['version'] and $get_embed['embed']){
 			$local_version = $module_version;
 			$last_version = $get_version['version'];
-			$embed		  = gefip_encrypt($get_embed['embed']);
+			$embed		  = gefib_encrypt($get_embed['embed']);
 			$created_at		= date("Y-m-d H:i:s");
 			$updated_at		= date("Y-m-d H:i:s");
 
 			try { Capsule::table('tblconfiguration')->insert(array(
-				'setting' => 'gefip_version',
+				'setting' => 'gefib_version',
 				'value' => json_encode([
 					'local_version'=>$module_version,
 					'last_version'=>$get_version['version'],
-					'check'=>gefip_encrypt($get_embed['embed']),
-					'admin'=>gefip_current_admin(),
+					'check'=>gefib_encrypt($get_embed['embed']),
+					'admin'=>gefib_current_admin(),
 				]),
 				'created_at' => $created_at,
 				'updated_at' => $updated_at
@@ -1013,12 +1013,12 @@ if(!function_exists('gefip_verify_module_updates')){
 			$last_version !== $available_version
 		)){
 			try {
-				Capsule::table('tblconfiguration')->where('setting','gefip_version')->update([
+				Capsule::table('tblconfiguration')->where('setting','gefib_version')->update([
 					'value' => json_encode([
 						'local_version'=>$module_version,
 						'last_version'=>$available_version,
-						'check'=>gefip_encrypt($get_embed['embed']),
-						'admin'=>gefip_current_admin(),
+						'check'=>gefib_encrypt($get_embed['embed']),
+						'admin'=>gefib_current_admin(),
 					]),
 					'created_at' =>  $created_at,
 					'updated_at' => date("Y-m-d H:i:s")]
@@ -1031,12 +1031,12 @@ if(!function_exists('gefip_verify_module_updates')){
 		// update
 		if($version and $get_version['version'] and $get_embed['embed'] and (string)$local_version !== (string)$module_version){
 			try {
-				Capsule::table('tblconfiguration')->where('setting','gefip_version')->update([
+				Capsule::table('tblconfiguration')->where('setting','gefib_version')->update([
 					'value' => json_encode([
 						'local_version'=>$module_version,
 						'last_version'=>$available_version,
-						'check'=>gefip_encrypt($get_embed['embed']),
-						'admin'=>gefip_current_admin(),
+						'check'=>gefib_encrypt($get_embed['embed']),
+						'admin'=>gefib_current_admin(),
 					]),
 					'created_at' =>  $created_at,
 					'updated_at' => date("Y-m-d H:i:s")]
@@ -1050,15 +1050,15 @@ if(!function_exists('gefip_verify_module_updates')){
 		$available_version_int = (int)preg_replace("/[^0-9]/", "", $available_version);
 		if( $available_version_int === $module_version_int ){
 			$message = '<p style="color: green"><i class="fas fa-check-square"></i> Você está executando a versão mais recente desse módulo</p>';
-            $message .= '<p>Última verificação '.date('d/m/Y à\s H:i', strtotime($updated_at)).' - <a style="text-decoration:underline;" href="'.gefip_whmcs_url('admin_url').'/configgateways.php?manage=gofasefipix&resetversion=gofasefipix#m_gofasefipix">verificar agora</a>.</p>';
+            $message .= '<p>Última verificação '.date('d/m/Y à\s H:i', strtotime($updated_at)).' - <a style="text-decoration:underline;" href="'.gefib_whmcs_url('admin_url').'/configgateways.php?manage=gofasefiboleto&resetversion=gofasefiboleto#m_gofasefiboleto">verificar agora</a>.</p>';
 		}
 		if( $available_version_int > $module_version_int ){
 			$message = '<p style="font-size: 14px; color: red;"><i class="fas fa-exclamation-triangle"></i> Atualização disponível, verifique a <a style="color:#CC0000;text-decoration:underline;" href="https://gofas.net/?p='.$page_id.'" target="_blank">versão '.$available_version.'</a>. Última verificação '.date('d/m/Y H:i', strtotime($updated_at)).'.';
-            $message .= '<p>Última verificação '.date('d/m/Y à\s H:i', strtotime($updated_at)).' - <a style="text-decoration:underline;" href="'.gefip_whmcs_url('admin_url').'/configgateways.php?manage=gofasefipix&resetversion=gofasefipix#m_gofasefipix">verificar agora</a>.</p>'; #9
+            $message .= '<p>Última verificação '.date('d/m/Y à\s H:i', strtotime($updated_at)).' - <a style="text-decoration:underline;" href="'.gefib_whmcs_url('admin_url').'/configgateways.php?manage=gofasefiboleto&resetversion=gofasefiboleto#m_gofasefiboleto">verificar agora</a>.</p>'; #9
 		}
 		if( $available_version_int < $module_version_int ){
 			$message = '<p style="font-size: 14px; color: orange;"><i class="fas fa-exclamation-triangle"></i> Você está executando uma versão Beta desse módulo<br>Baixar versão estável: <a style="color:#CC0000;text-decoration:underline;" href="https://gofas.net/?p='.$page_id.'" target="_blank">v'.$available_version.'</a>. Última verificação '.date('d/m/Y H:i', strtotime($updated_at)).'.';
-            $message .= '<p>Última verificação '.date('d/m/Y à\s H:i', strtotime($updated_at)).' - <a style="text-decoration:underline;" href="'.gefip_whmcs_url('admin_url').'/configgateways.php?manage=gofasefipix&resetversion=gofasefipix#m_gofasefipix">verificar agora</a>.</p>'; #9
+            $message .= '<p>Última verificação '.date('d/m/Y à\s H:i', strtotime($updated_at)).' - <a style="text-decoration:underline;" href="'.gefib_whmcs_url('admin_url').'/configgateways.php?manage=gofasefiboleto&resetversion=gofasefiboleto#m_gofasefiboleto">verificar agora</a>.</p>'; #9
         }
 		return [
 			'version'=>$version,
@@ -1069,43 +1069,43 @@ if(!function_exists('gefip_verify_module_updates')){
 		];
 	}
 }
-if(!function_exists('gefip_version')){
-	function gefip_version($opt=1){
-		foreach( Capsule::table('tblconfiguration') -> where('setting', '=', 'gefip_version') -> get( array( 'value','created_at') ) as $gefip_version_ ){
-			$gefip_version				= $gefip_version_->value;
-			$gefip_version_created_at	= $gefip_version_->created_at;
+if(!function_exists('gefib_version')){
+	function gefib_version($opt=1){
+		foreach( Capsule::table('tblconfiguration') -> where('setting', '=', 'gefib_version') -> get( array( 'value','created_at') ) as $gefib_version_ ){
+			$gefib_version				= $gefib_version_->value;
+			$gefib_version_created_at	= $gefib_version_->created_at;
 		}
 		if($opt=1){ // local_version string
-			$version = json_decode($gefip_version, true);
+			$version = json_decode($gefib_version, true);
 			return $version['local_version'];
 		}
 		if($opt=2){ // local_version integer
-			$version = json_decode($gefip_version, true);
+			$version = json_decode($gefib_version, true);
 			return (int)preg_replace("/[^0-9]/", "", $version['local_version']);
 		}
 		if($opt=3){ // full
-			return$gefip_version;
+			return$gefib_version;
 		}
 	}
 }
-if(!function_exists('gefip_current_admin')){
-	function gefip_current_admin(){
+if(!function_exists('gefib_current_admin')){
+	function gefib_current_admin(){
 		$currentUser = new \WHMCS\Authentication\CurrentUser;
 		$admin = json_decode(json_encode($currentUser->admin()),true);
 		return $admin;
 	}
 }
-if(!function_exists('gefip_setup_admin')){
-	function gefip_setup_admin(){
-	foreach( Capsule::table('tblconfiguration')->where('setting','=','gefip_version')->get(['value']) as $version_ ){
+if(!function_exists('gefib_setup_admin')){
+	function gefib_setup_admin(){
+	foreach( Capsule::table('tblconfiguration')->where('setting','=','gefib_version')->get(['value']) as $version_ ){
 		$version		= json_decode($version_->value, true);
 		$admin			= $version['admin'];
 	}
 	return $admin;
 }}
 
-if(!function_exists('gefip_get_protected_property')){
-	function gefip_get_protected_property($object, $property){
+if(!function_exists('gefib_get_protected_property')){
+	function gefib_get_protected_property($object, $property){
 	    $reflectedClass = new \ReflectionClass($object);
 	    $reflection = $reflectedClass->getProperty($property);
 	    $reflection->setAccessible(true);
@@ -1113,9 +1113,9 @@ if(!function_exists('gefip_get_protected_property')){
 	}
 }
 
-if(!function_exists('gefip_fee')){
-    function gefip_fee($amount){
-		$params = getGatewayVariables('gofasefipix');
+if(!function_exists('gefib_fee')){
+    function gefib_fee($amount){
+		$params = getGatewayVariables('gofasefiboleto');
 		$fee = (float)(((float)$amount/100)*(float)$params['fee']);
 		if($fee > (float)'7.90'){
 			return (float)'7.90';
@@ -1126,38 +1126,38 @@ if(!function_exists('gefip_fee')){
 	}
 }
 if($_REQUEST['invoice_id']){
-	$params = getGatewayVariables('gofasefipix');
-	$params_api = gefip_api_connect();
-	$invoice = localAPI('getinvoice',array('invoiceid'=> $_REQUEST['invoice_id']),(int)gefip_setup_admin()['id']);
+	$params = getGatewayVariables('gofasefiboleto');
+	$params_api = gefib_api_connect();
+	$invoice = localAPI('getinvoice',array('invoiceid'=> $_REQUEST['invoice_id']),(int)gefib_setup_admin()['id']);
 	if( $invoice['invoiceid']){
-		$qrcode = gefip_get_local_qrc($_REQUEST['invoice_id']);	
-		$charge = gefip_charge_verify($qrcode['txid']);
+		$qrcode = gefib_get_local_qrc($_REQUEST['invoice_id']);	
+		$charge = gefib_charge_verify($qrcode['txid']);
 		if(((STRING)$charge['result']['status'] === (STRING)'CONCLUIDA') and $invoice['status'] !== 'Paid' and (float)$invoice['total'] === (float)$charge['result']['valor']['original']){
-			$add_trans = gefip_add_trans($invoice['userid'],$_REQUEST['invoice_id'], (float)$charge['result']['valor']['original'], gefip_fee($charge['result']['valor']['original']), 'gefip-'.$params_api['api_mode'].'-'.$qrcode['txid'], 'Pix pago - confirmação enquanto o cliente visualizava a fatura');			
+			$add_trans = gefib_add_trans($invoice['userid'],$_REQUEST['invoice_id'], (float)$charge['result']['valor']['original'], gefib_fee($charge['result']['valor']['original']), 'gefib-'.$params_api['api_mode'].'-'.$qrcode['txid'], 'Boleto pago - confirmação enquanto o cliente visualizava a fatura');			
 		}
 		if($charge['result']['status']){
 			echo $charge['result']['status'];
 		}
 	}
 	if($params['log']){
-		logModuleCall('gofasefipix','callback',array('request'=>$_REQUEST),'', array( 'charge'=>$charge ) );
+		logModuleCall('gofasefiboleto','callback',array('request'=>$_REQUEST),'', array( 'charge'=>$charge ) );
 	}
 }
 if($_POST['id']){
-	$params = getGatewayVariables('gofasefipix');
-	$params_api = gefip_api_connect();
-	$invoice = localAPI('getinvoice',array('invoiceid'=> $_POST['id']),(int)gefip_setup_admin()['id']);
+	$params = getGatewayVariables('gofasefiboleto');
+	$params_api = gefib_api_connect();
+	$invoice = localAPI('getinvoice',array('invoiceid'=> $_POST['id']),(int)gefib_setup_admin()['id']);
 	if( $invoice['invoiceid']){
-		$qrcode = gefip_get_local_qrc($_POST['id']);	
-		$charge = gefip_charge_verify($qrcode['txid']);
+		$qrcode = gefib_get_local_qrc($_POST['id']);	
+		$charge = gefib_charge_verify($qrcode['txid']);
 		if(((string)$charge['result']['status'] === (string)'CONCLUIDA') and $invoice['status'] !== 'Paid' and (float)$invoice['total'] === (float)$charge['result']['valor']['original']){
-			$add_trans = gefip_add_trans($invoice['userid'],$_POST['id'], (float)$charge['result']['valor']['original'], gefip_fee($charge['result']['valor']['original']), 'gefip-'.$params_api['api_mode'].'-'.$qrcode['txid'], 'Pix pago - confirmação via webook /viewinvoice.php');			
+			$add_trans = gefib_add_trans($invoice['userid'],$_POST['id'], (float)$charge['result']['valor']['original'], gefib_fee($charge['result']['valor']['original']), 'gefib-'.$params_api['api_mode'].'-'.$qrcode['txid'], 'Boleto pago - confirmação via webook /viewinvoice.php');			
 		}
 		if($charge['result']['status']){
 			echo $charge['result']['status'];
 		}
 	}
 	if($params['log']){
-		logModuleCall('gofasefipix','post_1',array('request'=>$_POST),'', array( 'charge'=>$charge ) );
+		logModuleCall('gofasefiboleto','post_1',array('request'=>$_POST),'', array( 'charge'=>$charge ) );
 	}
 }

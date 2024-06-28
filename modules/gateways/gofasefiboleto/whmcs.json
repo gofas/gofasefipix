@@ -1,0 +1,37 @@
+{
+  "schema": "1.0",
+  "type": "whmcs-gateways",
+  "name": "gofasefiboleto",
+  "license": "proprietary",
+  "category": "payments",
+  "description": {
+    "name": "Gofas Efí Boleto",
+    "tagline": "Qr code Boleto e pagamentos instantâneos nas faturas do WHMCS",
+    "long": "Receba instantaneamente as cobranças do WHMCS por Boleto diretamente na sua conta Efí Bank.",
+    "features": [
+      "Confirmação automática em tempo real",
+      "QR code diretamente na fatura do WHMCS",
+      "Copiar código QR com apenas um clique",
+      "Tarifa especial para usuários do módulo",
+      "Mensagem personalizada na fatura",
+      "Reemissão automática de QR code expirado ",
+      "Chave Boleto definida pelo administrador do WHMCS",
+      "Instalação fácil e configuração intuitiva",
+      "E muito mais."
+    ]
+  },
+  "logo": {
+    "filename": "whmcs.png"
+  },
+  "support": {
+    "homepage": "https:\/\/gofas.net\/gefib",
+    "support_url": "https:\/\/gofas.net\/?p=15917",
+    "docs_url": "https:\/\/gofas.net\/gefib"
+  },
+  "authors": [
+    {
+      "name": "Gofas Software",
+      "homepage": "https:\/\/gofas.net\/"
+    }
+  ]
+}
