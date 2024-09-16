@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased](https://github.com/mauriciogofas/gofasefipix/tree/HEAD)
+
+[Full Changelog](https://github.com/mauriciogofas/gofasefipix/compare/v1.0.1...HEAD)
+
+**Implemented enhancements:**
+
+- Cobranças agora são geradas com CPF e CNPJ dando prioridade para CNPJ [\#3](https://github.com/mauriciogofas/gofasefipix/issues/3)
+
 ## [v1.0.1](https://github.com/mauriciogofas/gofasefipix/tree/v1.0.1) (11/04/2024)
 
 [Full Changelog](https://github.com/mauriciogofas/gofasefipix/compare/v1.0.0...v1.0.1)
