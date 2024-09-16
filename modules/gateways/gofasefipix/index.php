@@ -5,7 +5,7 @@
  * @see			https://gofas.net/?p=15590
  * @license		https://gofas.net/?p=9340
  * @support		https://gofas.net/?p=14299
- * @version		1.0.1
+ * @version		1.1.0
  */
 
 require_once __DIR__ . '/../../../init.php';
@@ -130,7 +130,7 @@ if(!function_exists('gofasefipix_config')){
     function gofasefipix_config(){
 		$gefip_config = [];
     	if(stripos($_SERVER['REQUEST_URI'], 'configgateways')!==false){
-    		$module_version	= '1.0.1';
+    		$module_version	= '1.1.0';
     		$module_page	= '15590';
             $verify_install = gefip_verify_install();
     		$whmcs_url = gefip_whmcs_url();
@@ -402,24 +402,40 @@ if(!function_exists('gofasefipix_link')){
 						$increment = 0;
     					$line_items[$increment++] = $Value['description'];
     				}
-					$postfields = [
-						'calendario'=> [
-						  'expiracao'=> 3600
-						],
-						'devedor'=> [
-						  'cpf'=> $customer['cpf'],
-						  'nome'=> $customer['name']
-						],
-						'valor'=> [
-						  'original'=> number_format($params['amount'], 2,'.',''),
-						],
-						'chave'=> $params['pixkey'],
-						'solicitacaoPagador'=> (string)(substr( implode("\n",$line_items),  0, 140))
-					];
-					
+					if($customer['cpf']){
+						$postfields = [
+							'calendario'=> [
+							  'expiracao'=> 3600
+							],
+							'devedor'=> [
+							  'cpf'=> $customer['cpf'],
+							  'nome'=> $customer['name']
+							],
+							'valor'=> [
+							  'original'=> number_format($params['amount'], 2,'.',''),
+							],
+							'chave'=> $params['pixkey'],
+							'solicitacaoPagador'=> (string)(substr( implode("\n",$line_items),  0, 140))
+						];
+					}
+					if($customer['cnpj']){
+						$postfields = [
+							'calendario'=> [
+							  'expiracao'=> 3600
+							],
+							'devedor'=> [
+							  'cnpj'=> $customer['cnpj'],
+							  'nome'=> $customer['name']
+							],
+							'valor'=> [
+							  'original'=> number_format($params['amount'], 2,'.',''),
+							],
+							'chave'=> $params['pixkey'],
+							'solicitacaoPagador'=> (string)(substr( implode("\n",$line_items),  0, 140))
+						];
+					}
     				$qrcode_ = gefip_charge($postfields);
-					
-    				if((int)$qrcode_['result_code'] !== (int)200){
+					if((int)$qrcode_['result_code'] !== (int)200){
     					$error .= $qrcode_['result_code'].': ';
     					if(is_array($qrcode_['result']['errors'])){
 							foreach($qrcode_['result']['errors'] as $key=>$value){
@@ -830,6 +846,9 @@ if(!function_exists('gefip_customer')){
 		];
 		if($cpf){
 			$customer['cpf']=$cpf;
+		}
+		if($cnpj){
+			$customer['cnpj']=$cnpj;
 		}
 		return $customer;
 	}
