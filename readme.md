@@ -1,8 +1,8 @@
 # Changelog
 
-## [Unreleased](https://github.com/mauriciogofas/gofasefipix/tree/HEAD)
+## [v1.1.1](https://github.com/mauriciogofas/gofasefipix/tree/v1.1.1) (02/12/2024)
 
-[Full Changelog](https://github.com/mauriciogofas/gofasefipix/compare/v1.1.0...HEAD)
+[Full Changelog](https://github.com/mauriciogofas/gofasefipix/compare/v1.1.0...v1.1.1)
 
 **Closed issues:**
 
