@@ -6,7 +6,7 @@
 
 **Closed issues:**
 
-- Melhorada a logica de formação dos URLs para impedir barras duplicadas em servidores apache [\#4](https://github.com/mauriciogofas/gofasefipix/issues/4)
+- Melhorada a logica de formação dos URLs para impedir barras duplicadas [\#4](https://github.com/mauriciogofas/gofasefipix/issues/4)
 
 ## [v1.1.0](https://github.com/mauriciogofas/gofasefipix/tree/v1.1.0) (16/09/2024)
 
