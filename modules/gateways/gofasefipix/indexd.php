@@ -5,7 +5,7 @@
  * @see			https://gofas.net/?p=15590
  * @license		https://gofas.net/?p=9340
  * @support		https://gofas.net/?p=14299
- * @version		1.1.0
+ * @version		1.1.1
  */
 
 require_once __DIR__ . '/../../../init.php';
@@ -130,7 +130,7 @@ if(!function_exists('gofasefipix_config')){
     function gofasefipix_config(){
 		$gefip_config = [];
     	if(stripos($_SERVER['REQUEST_URI'], 'configgateways')!==false){
-    		$module_version	= '1.1.0';
+    		$module_version	= '1.1.1';
     		$module_page	= '15590';
             $verify_install = gefip_verify_install();
     		$whmcs_url = gefip_whmcs_url();
@@ -602,7 +602,7 @@ if(!function_exists('gefip_webhook')){
 			$webhook				= json_decode($webhook_->value, true);
 			$webhook['created_at']	= $webhook_->created_at;
 		}
-		$webhook_url = gefip_whmcs_url('whmcs_url').'modules/gateways/gofasefipix/includes/';
+		$webhook_url = gefip_whmcs_url('whmcs_url').'modules/gateways/gofasefipix/includes';
 		if($webhook['webhook_url'] !== $webhook_url || $webhook['pixkey'] !== $params['pixkey'] || !$webhook['webhook_url'] || !$webhook['pixkey']){
 			$curl = curl_init($params_api['charge_url'].'/v2/webhook/'.$params['pixkey']);
 			curl_setopt($curl, CURLOPT_HTTPHEADER, array(
