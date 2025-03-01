@@ -7,9 +7,4 @@
  * @support		https://gofas.net/?p=14299
  * @version		1.2.0
  */
-if((int)substr(preg_replace('/[^\da-z]/i','',phpversion()),0,2)>=(int)82){
-	require_once __DIR__.'/gofasefipix/index.php';
-}
-if((int)substr(preg_replace('/[^\da-z]/i','',phpversion()),0,2)<=(int)81){
-    require_once __DIR__.'/gofasefipix/indexd.php';
-}
+require_once __DIR__.'/gofasefipix/index.php';
