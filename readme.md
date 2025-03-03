@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased](https://github.com/mauriciogofas/gofasefipix/tree/HEAD)
+
+[Full Changelog](https://github.com/mauriciogofas/gofasefipix/compare/v1.1.1...HEAD)
+
+**Closed issues:**
+
+- Compatibilidade com PHP 8.2 e 8.3 [\#5](https://github.com/mauriciogofas/gofasefipix/issues/5)
+
 ## [v1.1.1](https://github.com/mauriciogofas/gofasefipix/tree/v1.1.1) (02/12/2024)
 
 [Full Changelog](https://github.com/mauriciogofas/gofasefipix/compare/v1.1.0...v1.1.1)
