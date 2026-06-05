@@ -1,27 +1,24 @@
-# Gofas Efí Pix
+# Changelog
 
-Módulo de gateway de pagamento para WHMCS que integra cobranças via Pix instantâneo através da API Efí (EFI Pay). Desenvolvido pela Gofas Software.
+## [Unreleased](https://github.com/mauriciogofas/gofasefipix/tree/HEAD)
 
-## Funcionalidades
+## [v1.2.0] - 2025-03-03
 
-- Geração de cobranças Pix via API Efí
-- QR Code dinâmico exibido na área do cliente
-- Baixa automática de fatura via webhook
-- Suporte a Pix com vencimento
 
-## Requisitos
 
-- WHMCS 7.x ou superior
-- PHP 8.x
-- Conta Efí (EFI Pay) com Pix habilitado
-- Credenciais: Client ID, Client Secret e certificado `.p12`
+## [v1.1.1] - 2024-12-02
 
-## Instalação
 
-1. Copiar `modules/gateways/` para o `modules/gateways/` do WHMCS
-2. Ativar em **Configurações > Formas de Pagamento**
-3. Informar credenciais e certificado
 
-## Changelog
+## [v1.1.0] - 2024-09-16
 
-Ver [changelog.md](changelog.md).
+
+
+## [v1.0.1] - 2024-04-11
+
+
+
+## [v1.0.0] - 2024-02-28
+
+
+
