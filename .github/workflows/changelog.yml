@@ -15,7 +15,7 @@ jobs:
         uses: charmixer/auto-changelog-action@v1.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          output: readme.md
+          output: changelog.md
           date_format: '%d/%m/%Y'
       - name: Commit files
         env:
@@ -24,7 +24,7 @@ jobs:
         run: |
           git config --local user.email "$CI_EMAIL"
           git config --local user.name "$CI_USER"
-          git add readme.md && git commit -m 'Updated readme.md' && $(echo "push=1" >> $GITHUB_ENV) || echo "No changes to readme.md"
+          git add changelog.md && git commit -m 'Updated changelog.md' && $(echo "push=1" >> $GITHUB_ENV) || echo "No changes to changelog.md"
       - name: Push changes
         if: env.push == 1
         env:
