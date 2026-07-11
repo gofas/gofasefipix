@@ -5,6 +5,7 @@
 
 **Melhorias:**
 
+- Adicionar consentimento e padronizar telemetria - [#9](https://github.com/mauriciogofas/gofasefipix/issues/9)
 - Migrar repo para org gofas - [#8](https://github.com/mauriciogofas/gofasefipix/issues/8)
 - Sincronizar pagamentos diretos Efí com WHMCS (criar clientes se necessário) - [#7](https://github.com/mauriciogofas/gofasefipix/issues/7) <a href="https://github.com/mauriciogofas/gofasefipix/issues?q=is%3Aissue+state%3Aclosed+label%3Aenhancement" style="color:#a99c9c;text-decoration:none"><code>enhancement</code></a>
 
