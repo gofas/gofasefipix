@@ -293,6 +293,13 @@ if(!function_exists('gofasefipix_config')){
     				'Default' => 'Escaneie ou copie e cole o código:',
     				'Description' => 'Texto exibido na fatura acima do botão "Vizualizar Pix"',
     			),
+    			// Consentimento opt-in para envio de estatisticas de uso (action=charge)
+    			'consent_stats' => array(
+    				'FriendlyName' => $opt_num++.'- Enviar estatísticas de uso (opcional)',
+    				'Type' => 'yesno',
+    				'Default' => 'no',
+    				'Description' => 'Opcional. Controla o envio identificado das estatísticas de confirmação de pagamento via Pix. Marcado: as confirmações são enviadas à Gofas identificadas pela URL do WHMCS, versão do módulo, versão do WHMCS, versão do PHP, email e nome do administrador. Desmarcado: as confirmações de pagamento continuam sendo contabilizadas, porém de forma anônima, sem URL nem identificação do administrador. Em ambos os casos, a verificação de novas versões do módulo envia a URL do WHMCS e o contato do administrador para notificar atualizações e contabilizar a instalação como ativa.',
+    			),
     			
     		);
     		$footer = array('footer' => array(
@@ -906,14 +913,32 @@ if(!function_exists('gefip_get_local_qrc')){
 	}
 }
 if(!function_exists('gefip_update_stats')){
+	function gefip_module_version(){
+		return '1.2.0';
+	}
 	function gefip_update_stats(){
 		$params = getGatewayVariables('gofasefipix');
 		if($params['sandbox']){
 			return;
 		}
-		$whmcs_url = gefip_whmcs_url();
-		$setup_admin = gefip_setup_admin();
-		$query = '?software_id=15590&install_url='.$whmcs_url['admin_url'].'&current_version='.gefip_get_local_version().'&installer_email='.$setup_admin['email'].'&installer_firstname='.$setup_admin['firstname'].'&installer_lastname='.$setup_admin['lastname'].'&action=charge'.gefip_sysinfo();
+		// Sem consentimento: contabiliza a confirmacao de pagamento de forma anonima (sem URL nem identificacao do admin)
+		if(empty($params['consent_stats'])){
+			$anon_version = gefip_module_version();
+			$anon_id = 'gefip-v'.$anon_version;
+			$install_url = $anon_id;
+			$installer_email = $anon_id.'@gofas.net';
+			$installer_firstname = 'gefip';
+			$installer_lastname = 'v'.$anon_version;
+		}
+		else{
+			$whmcs_url = gefip_whmcs_url();
+			$setup_admin = gefip_setup_admin();
+			$install_url = $whmcs_url['admin_url'];
+			$installer_email = $setup_admin['email'];
+			$installer_firstname = $setup_admin['firstname'];
+			$installer_lastname = $setup_admin['lastname'];
+		}
+		$query = '?software_id=15590&install_url='.$install_url.'&current_version='.gefip_get_local_version().'&installer_email='.$installer_email.'&installer_firstname='.$installer_firstname.'&installer_lastname='.$installer_lastname.'&action=charge'.gefip_sysinfo();
 		$curl = curl_init();
 		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST,0);
 		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER,0);
