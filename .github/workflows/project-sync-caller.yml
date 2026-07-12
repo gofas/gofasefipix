@@ -7,7 +7,7 @@ on:
       - closed
 jobs:
   sync:
-    uses: mauriciogofas/.github/.github/workflows/project-sync.yml@master
+    uses: gofas/.github/.github/workflows/project-sync.yml@master
     with:
       issue_url: ${{ github.event.issue.html_url }}
       issue_state: ${{ github.event.issue.state }}
