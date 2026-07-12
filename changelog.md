@@ -1,6 +1,6 @@
 # Changelog
 
-## [Próxima atualização](https://github.com/gofas/gofasefipix/tree/HEAD)
+## [v1.3.0 - 12/07/2026](https://github.com/gofas/gofasefipix/releases/tag/v1.3.0)
 
 
 **Melhorias:**
@@ -10,7 +10,7 @@
 - Migrar repo para org gofas - [#8](https://github.com/gofas/gofasefipix/issues/8)
 - Sincronizar pagamentos diretos Efí com WHMCS (criar clientes se necessário) - [#7](https://github.com/gofas/gofasefipix/issues/7) <a href="https://github.com/gofas/gofasefipix/issues?q=is%3Aissue+state%3Aclosed+label%3Aenhancement" style="color:#a99c9c;text-decoration:none"><code>enhancement</code></a>
 
-[Comparar versões](https://github.com/gofas/gofasefipix/compare/v1.2.0...HEAD)
+[Comparar versões](https://github.com/gofas/gofasefipix/compare/v1.2.0...v1.3.0)
 
 ## [v1.2.0 - 07/06/2026](https://github.com/gofas/gofasefipix/releases/tag/v1.2.0)
 
