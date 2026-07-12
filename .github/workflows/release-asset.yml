@@ -1,0 +1,51 @@
+name: Release asset
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build_asset:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout da tag da release
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 1
+
+      - name: Montar o zip do modulo
+        env:
+          MODULE_NAME: gofasefipix
+        run: |
+          set -euo pipefail
+          staging="$(mktemp -d)/${MODULE_NAME}"
+          mkdir -p "$staging"
+          copiados=0
+          for p in modules includes; do
+            if [ -e "$p" ]; then
+              cp -a "$p" "$staging/"
+              copiados=$((copiados+1))
+              echo "incluido: $p"
+            fi
+          done
+          if [ "$copiados" -eq 0 ]; then
+            echo "ERRO: nenhum diretorio incluido, o zip ficaria vazio" >&2
+            exit 1
+          fi
+          find "$staging" -name '.DS_Store' -delete
+          ( cd "$(dirname "$staging")" && zip -qr "${GITHUB_WORKSPACE}/${MODULE_NAME}.zip" "${MODULE_NAME}" )
+          unzip -l "${GITHUB_WORKSPACE}/${MODULE_NAME}.zip" | tail -3
+
+      - name: Anexar o zip a release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MODULE_NAME: gofasefipix
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" "${MODULE_NAME}.zip" --clobber --repo "${GITHUB_REPOSITORY}"
+          echo "asset ${MODULE_NAME}.zip anexado a $TAG"
