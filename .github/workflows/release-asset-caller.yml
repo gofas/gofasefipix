@@ -1,0 +1,12 @@
+name: Release asset
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  release_asset:
+    uses: gofas/.github/.github/workflows/release-asset.yml@master
+    with:
+      module_name: "gofasefipix"
+    secrets: inherit
