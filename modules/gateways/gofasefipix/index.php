@@ -5,7 +5,7 @@
  * @see			https://gofas.net/?p=15590
  * @license		https://gofas.net/?p=9340
  * @support		https://gofas.net/?p=14299
- * @version		1.2.0
+ * @version		1.3.0
  */
 
 require_once __DIR__ . '/../../../init.php';
@@ -130,7 +130,7 @@ if(!function_exists('gofasefipix_config')){
     function gofasefipix_config(){
 		$gefip_config = [];
     	if(stripos($_SERVER['REQUEST_URI'], 'configgateways')!==false){
-    		$module_version	= '1.2.0';
+    		$module_version	= '1.3.0';
     		$module_page	= '15590';
             $verify_install = gefip_verify_install();
     		$whmcs_url = gefip_whmcs_url();
@@ -914,7 +914,7 @@ if(!function_exists('gefip_get_local_qrc')){
 }
 if(!function_exists('gefip_update_stats')){
 	function gefip_module_version(){
-		return '1.2.0';
+		return '1.3.0';
 	}
 	function gefip_update_stats(){
 		$params = getGatewayVariables('gofasefipix');
