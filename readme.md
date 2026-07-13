@@ -1,12 +1,28 @@
 # Módulo Efí Pix para WHMCS
 
+[![versão](https://img.shields.io/github/v/release/gofas/gofasefipix?label=vers%C3%A3o&color=005071&style=flat-square)](https://github.com/gofas/gofasefipix/releases/latest)
+[![downloads](https://img.shields.io/github/downloads/gofas/gofasefipix/total?label=downloads&color=005071&style=flat-square)](https://github.com/gofas/gofasefipix/releases/latest)
+[![licença](https://img.shields.io/badge/licen%C3%A7a-propriet%C3%A1ria-005071?style=flat-square)](https://gofas.net/contrato-de-venda-de-licenca-de-uso-de-software/)
+[![suporte](https://img.shields.io/badge/suporte-f%C3%B3rum%20gratuito-ff8700?style=flat-square)](https://gofas.net/foruns/)
+
 Receba por Pix instantaneamente, direto na sua conta Efí, as cobranças do WHMCS. O QR code e o copia e cola aparecem na própria fatura, e a confirmação do pagamento é automática, em tempo real. Desenvolvido pela Gofas Software, é 100% gratuito.
+
+## Sumário
+
+- [Download](#download)
+- [Funcionalidades](#funcionalidades)
+- [Requisitos](#requisitos)
+- [Instalação](#instalação)
+- [Configuração](#configuração)
+- [Informações importantes](#informações-importantes)
+- [Suporte](#suporte)
+- [Licença](#licença)
 
 ## Download
 
-Baixe a versão mais recente:
+**[Baixar a versão mais recente](https://github.com/gofas/gofasefipix/releases/latest/download/gofasefipix.zip)**
 
-https://github.com/gofas/gofasefipix/releases/latest/download/gofasefipix.zip
+O download é contabilizado no site pelo contador de instalações do módulo.
 
 ## Funcionalidades
 
@@ -59,7 +75,7 @@ Crie um campo personalizado de cliente para CPF e/ou CNPJ, ou dois campos distin
 
 ### Opções do módulo
 
-<img src="https://raw.githubusercontent.com/gofas/gofasefipix/master/docs/img/tela-configuracoes-modulo.png" alt="Tela de configuracoes do modulo" width="640">
+<img src="https://raw.githubusercontent.com/gofas/gofasefipix/master/docs/img/tela-configuracoes-modulo-1.3.0.png" alt="Tela de configuracoes do modulo" width="640">
 
 - **Chave Client ID Produção** e **Chave Client Secret Produção**: credenciais da aplicação em modo produção.
 - **Certificado Produção**: caminho completo do arquivo `.pem` de produção, exemplo `/var/www/site.com.br/certificado.pem`.
