@@ -5,6 +5,7 @@
 
 **Melhorias:**
 
+- readme: link de suporte para o forum do proprio modulo - [#14](https://github.com/gofas/gofasefipix/issues/14)
 - readme: contador do site, captura sem aviso de hook e secao de licenca - [#13](https://github.com/gofas/gofasefipix/issues/13)
 - readme: captura versionada, badges e sumario - [#12](https://github.com/gofas/gofasefipix/issues/12)
 - readme: conteudo da pagina do site transferido e captura de configuracao - [#11](https://github.com/gofas/gofasefipix/issues/11)
