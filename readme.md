@@ -1,8 +1,7 @@
 # Módulo Efí Pix para WHMCS
 
 [![versão](https://img.shields.io/github/v/release/gofas/gofasefipix?label=vers%C3%A3o&color=005071&style=flat-square)](https://github.com/gofas/gofasefipix/releases/latest)
-[![downloads](https://img.shields.io/github/downloads/gofas/gofasefipix/total?label=downloads&color=005071&style=flat-square)](https://github.com/gofas/gofasefipix/releases/latest)
-[![licença](https://img.shields.io/badge/licen%C3%A7a-propriet%C3%A1ria-005071?style=flat-square)](https://gofas.net/contrato-de-venda-de-licenca-de-uso-de-software/)
+[![downloads](https://img.shields.io/endpoint?url=https%3A%2F%2Fgofas.net%2Fwp-json%2Fgofas%2Fv1%2Fbadge%2Fgofasefipix&style=flat-square)](https://github.com/gofas/gofasefipix/releases/latest)
 [![suporte](https://img.shields.io/badge/suporte-f%C3%B3rum%20gratuito-ff8700?style=flat-square)](https://gofas.net/foruns/)
 
 Receba por Pix instantaneamente, direto na sua conta Efí, as cobranças do WHMCS. O QR code e o copia e cola aparecem na própria fatura, e a confirmação do pagamento é automática, em tempo real. Desenvolvido pela Gofas Software, é 100% gratuito.
@@ -21,8 +20,6 @@ Receba por Pix instantaneamente, direto na sua conta Efí, as cobranças do WHMC
 ## Download
 
 **[Baixar a versão mais recente](https://github.com/gofas/gofasefipix/releases/latest/download/gofasefipix.zip)**
-
-O download é contabilizado no site pelo contador de instalações do módulo.
 
 ## Funcionalidades
 
@@ -101,4 +98,10 @@ Fórum de suporte gratuito: https://gofas.net/foruns/
 
 ## Licença
 
-Software proprietário da Gofas Software. O código é público apenas para transparência e consulta; isso não concede licença de uso, modificação ou redistribuição. É vedado modificar, redistribuir, sublicenciar ou realizar engenharia reversa sem autorização prévia por escrito. Veja [LICENSE](LICENSE) e o contrato completo em https://gofas.net/contrato-de-venda-de-licenca-de-uso-de-software/.
+O código deste módulo é público para transparência e auditoria. Isso não transfere a titularidade nem concede licença livre de uso: o software é de propriedade da Gofas Software, protegido pela Lei 9.609/98 e pelos tratados de direitos autorais.
+
+Trechos do [contrato de licença de uso](https://gofas.net/contrato-de-venda-de-licenca-de-uso-de-software/) que se aplicam diretamente a este repositório:
+
+- **Não redistribuir**: é proibido o aluguel, o arrendamento, o empréstimo, a cessão e o licenciamento do software a terceiros, total ou parcial, assim como o fornecimento de serviços de hospedagem comercial do software (Cláusula 10ª, §3º).
+- **Não modificar**: é vedado qualquer procedimento que implique engenharia reversa, descompilação, desmontagem, tradução, adaptação ou modificação do software, bem como qualquer alteração não autorizada de suas funcionalidades (Cláusula 10ª, §2º).
+- **Módulo alterado perde o suporte**: a Gofas não se responsabiliza por defeitos decorrentes de alteração do software, de operação por pessoas não autorizadas ou da integração com softwares de terceiros (Cláusula 10ª, §7º). O suporte é uma cortesia e não é garantido pela licença (Cláusula 7ª, §1º).
