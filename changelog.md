@@ -1,5 +1,14 @@
 # Changelog
 
+## [Próxima atualização](https://github.com/gofas/gofasefipix/tree/HEAD)
+
+
+**Melhorias:**
+
+- readme: conteudo da pagina do site transferido e captura de configuracao - [#11](https://github.com/gofas/gofasefipix/issues/11)
+
+[Comparar versões](https://github.com/gofas/gofasefipix/compare/v1.3.0...HEAD)
+
 ## [v1.3.0 - 12/07/2026](https://github.com/gofas/gofasefipix/releases/tag/v1.3.0)
 
 
