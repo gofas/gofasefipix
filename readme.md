@@ -2,7 +2,7 @@
 
 [![versão](https://img.shields.io/github/v/release/gofas/gofasefipix?label=vers%C3%A3o&color=005071&style=flat-square)](https://github.com/gofas/gofasefipix/releases/latest)
 [![downloads](https://img.shields.io/endpoint?url=https%3A%2F%2Fgofas.net%2Fwp-json%2Fgofas%2Fv1%2Fbadge%2Fgofasefipix&style=flat-square)](https://github.com/gofas/gofasefipix/releases/latest)
-[![suporte](https://img.shields.io/badge/suporte-f%C3%B3rum%20gratuito-ff8700?style=flat-square)](https://gofas.net/foruns/)
+[![abrir issue](https://img.shields.io/badge/suporte-abrir%20issue-ff8700?style=flat-square)](https://gofas.net/?p=15917/#new-post)
 
 Receba por Pix instantaneamente, direto na sua conta Efí, as cobranças do WHMCS. O QR code e o copia e cola aparecem na própria fatura, e a confirmação do pagamento é automática, em tempo real. Desenvolvido pela Gofas Software, é 100% gratuito.
 
@@ -94,7 +94,7 @@ Crie um campo personalizado de cliente para CPF e/ou CNPJ, ou dois campos distin
 
 ## Suporte
 
-Fórum de suporte gratuito: https://gofas.net/foruns/
+[Abrir issue](https://gofas.net/?p=15917/#new-post) no fórum do módulo.
 
 ## Licença
 
